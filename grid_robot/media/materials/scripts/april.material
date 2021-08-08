@@ -1,0 +1,14 @@
+material Grid/AprilTag
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture april_tag.png
+      }
+    }
+  }
+}
+
