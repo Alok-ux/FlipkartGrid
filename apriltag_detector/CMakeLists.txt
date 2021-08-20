@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sensor_msgs
+  geometry_msgs
   cv_bridge
 )
 
@@ -19,5 +20,9 @@ include_directories(
 
 
 catkin_install_python(PROGRAMS  scripts/node1.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+catkin_install_python(PROGRAMS  scripts/node2.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
