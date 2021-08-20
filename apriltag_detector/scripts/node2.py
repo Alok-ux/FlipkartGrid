@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+#author: Debanshu
 
 import rospy
 import re
 import math
 from std_msgs.msg import Int32MultiArray,String
 from geometry_msgs.msg import Twist
+
 
 
 list1 = [[542,87],[542,602],[85,602]]
