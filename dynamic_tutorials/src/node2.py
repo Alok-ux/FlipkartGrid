@@ -1,6 +1,8 @@
 #!/usr/bin/env python
-#author: Debanshu
-#token: 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
+#author: prats
+#token: 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
+
+
 import rospy
 import re
 import math
@@ -13,7 +15,7 @@ list1 = [[542,87],[542,602],[85,602]]
 list2 = [[604,87],[604,666],[85,666]]
 list3 = [[731,87],[731,666],[1186,666]]
 list4 = [[667,87],[667,602],[1186,602]]
-p,i,d = 0.01,0.01,0.01
+#p,i,d = 0.01,0.01,0.01
 flag1 , flag2 , flag3 ,flag4 ,flag5 ,flag6 = False , False , False ,False,False,False
 g = None
 
@@ -26,11 +28,22 @@ class listen():
         self.pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
         self.msg = Twist()
         self.rate = rospy.Rate(30)
+	self.kp=0.01
+	self.ki=0.01
+	self.kd=0.01
+	self.base_speed=0.1
+	self.ang_speed=0.0
+	
 	srv = Server(TutorialsConfig,self.reconfig)
 
 
     def reconfig(self,config,level):
         print(config.kp,config.ki,config.kd,config.speed,config.ang)
+	self.kp=config.kp
+	self.ki=config.ki
+	self.kd=config.kd
+	self.base_speed=config.speed
+	self.ang_speed=config.ang		
         return config
 
     def callback(self,data):
@@ -59,8 +72,8 @@ class listen():
             print(e)
 
     def wheel_speed(self,err,err_ang):
-        base_speed = 0.1
-        err_speed = p*(err-err_ang)
+        base_speed = self.base_speed
+        err_speed = self.kp*(err-err_ang)
         self.msg.linear.x = base_speed
         self.msg.linear.y = 0.0
         self.msg.linear.z = 0.0
