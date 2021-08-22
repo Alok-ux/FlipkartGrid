@@ -4,7 +4,7 @@
 import rospy
 import re
 import math
-from std_msgs.msg import Int32,String
+from std_msgs.msg import Int32MultiArray,String
 from geometry_msgs.msg import Twist
 
 
@@ -14,15 +14,15 @@ list2 = [[604,87],[604,666],[85,666]]
 list3 = [[731,87],[731,666],[1186,666]]
 list4 = [[667,87],[667,602],[1186,602]]
 p,i,d = 0.01,0.01,0.01
-flag1 , flag2 , flag3 ,flag4 ,flag5 ,flag6,flag7,flag8 = False,False,False,False,False,False,False,False
+flag1 , flag2 , flag3 ,flag4 ,flag5 ,flag6 = False , False , False ,False,False,False
 g = None
 class listen():
 
     def __init__(self):
         rospy.init_node('listener2',anonymous=True)
-        self.sub = rospy.Subscriber("apriltag_centre1",String,self.callback)
+        self.sub = rospy.Subscriber("apriltag_centre",String,self.callback)
         self.pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
-        self.pub1 = rospy.Publisher("bot_a",Int32,queue_size=10)
+        self.pub4 = rospy.Publisher("bot_d",Int32,queue_size=10)
         self.msg = Twist()
         self.rate = rospy.Rate(30)
 
@@ -71,15 +71,15 @@ class listen():
 
     def bot_error(self,deg,x1,y1,*arg2):
         arg2 = list(arg2)
-        global list1,p,i,d,flag1,flag3,flag4
-        if arg2[1] < list1[1][1] and flag1 == False:
+        global list4,p,i,d,flag1,flag3,flag4
+        if arg2[1] < list4[1][1] and flag1 == False:
             print("in 1")
-            err = list1[1][0]-arg2[0]
+            err = list4[1][0]-arg2[0]
             mod1 = (x1**2+y1**2)**0.5
             err_deg = 90 - math.degrees(math.acos(x1/mod1))
             self.wheel_speed(err,err_deg)
 
-        elif arg2[1] >= list1[1][1]-30 and deg <= 178 and flag1 == False :
+        elif arg2[1] >= list4[1][1]-30 and deg >= 2 and flag1 == False :
             print("in 2")
             self.msg.linear.x = 0.0
             self.msg.linear.y = 0.0
@@ -87,7 +87,7 @@ class listen():
 
             self.msg.angular.x = 0.0
             self.msg.angular.y = 0.0
-            self.msg.angular.z = -0.1
+            self.msg.angular.z = 0.1
             flag1 = True
             try:
                 self.pub.publish(self.msg)
@@ -96,7 +96,7 @@ class listen():
             except rospy.ROSInterruptException as e:
                 print(e)
 
-        elif arg2[0] < list1[2][0] :
+        elif arg2[0] > list4[2][0] :
             print("in 4")
             self.msg.linear.x = 0.0
             self.msg.linear.y = 0.0
@@ -114,20 +114,20 @@ class listen():
                 print(e)
 
 
-        elif arg2[1] >= list1[1][1]-66 and deg >178 and flag1 == True and flag4 == False:
+        elif arg2[1] >= list4[1][1]-66 and deg < 2 and flag1 == True and flag4 == False:
             flag3 = True
             flag4 = True
-        elif arg2[1] >= list1[1][1]-66 and flag3 == True and flag1 == True:
+        elif arg2[1] >= list4[1][1]-66 and flag3 == True and flag1 == True:
             print("in 3")
-            err = list1[1][1]-arg2[1]
+            err = arg2[1]-list4[1][1]
             mod1 = (x1**2+y1**2)**0.5
-            err_deg = 90 - math.degrees(math.acos(y1/mod1))
+            err_deg = math.degrees(math.acos(y1/mod1))-90
             self.wheel_speed(err,err_deg)
 
     def rev_bot_error(self,deg,x1,y1,*arg2):
         arg2 = list(arg2)
-        global list1,p,i,d,flag2,flag5,flag6,flag7,flag8
-        if arg2[0] <= list1[2][0]+20 and flag2 == False:
+        global list4,p,i,d,flag2,flag5,flag6
+        if arg2[0] >= list4[2][0]+20 and flag2 == False:
             print("in 5")
             self.msg.linear.x = 0.0
             self.msg.linear.y = 0.0
@@ -145,24 +145,24 @@ class listen():
             except rospy.ROSInterruptException as e:
                 print(e)
 
-        elif arg2[0] <= list1[1][0]-10 and flag2 == True and deg <= 2 and flag6 == False:
+        elif arg2[0] >= list4[1][0]-10 and flag2 == True and deg >= 178 and flag6 == False:
             flag5 = True
             flag6 = True
-        elif arg2[0] <= list1[1][0]-10 and flag2 == True and flag5 == True:
+        elif arg2[0] <= list4[1][0]-10 and flag2 == True and flag5 == True:
             print("in 6")
-            err = arg2[1]-list1[1][1]
+            err = list4[1][1]-arg2[1]
             mod2 = (x1**2+y1**2)**0.5
-            err_deg = math.degrees(math.acos(y1/mod2))-90
+            err_deg = 90-math.degrees(math.acos(y1/mod2))
             self.wheel_speed(err,err_deg)
 
-        elif arg2[0] > list1[1][0]-10 and flag2 == True and deg < 10 :
+        elif arg2[0] < list4[1][0]-10 and flag2 == True and deg > 170 :
             self.msg.linear.x = 0.0
             self.msg.linear.y = 0.0
             self.msg.linear.z = 0.0
 
             self.msg.angular.x = 0.0
             self.msg.angular.y = 0.0
-            self.msg.angular.z = 0.1
+            self.msg.angular.z = -0.1
             flag2 = True
             try:
                 self.pub.publish(self.msg)
@@ -172,10 +172,7 @@ class listen():
             except rospy.ROSInterruptException as e:
                 print(e)
 
-        # elif arg2[1] > list1[1][0]-10 and deg > 88 and flag7 == False and flag2 == True:
-        #     flag7 = True
-        #     flag8 = True
-        elif arg2[1] < list1[0][1]:
+        elif arg2[1] < list4[0][1]:
             print("in 8")
             self.msg.linear.x = 0.0
             self.msg.linear.y = 0.0
@@ -187,7 +184,6 @@ class listen():
             flag2 = True
             try:
                 self.pub.publish(self.msg)
-                self.pub1.publish(1)
                 self.rate.sleep()
                 exit()
                 return True
@@ -195,15 +191,12 @@ class listen():
             except rospy.ROSInterruptException as e:
                 print(e)
 
-
-        elif arg2[0] > list1[1][0]-66 and flag2 == True and deg > 80:
+        elif arg2[0] < list4[1][0]-66 and flag2 == True and deg < 100:
             print("in 7")
-            err = arg2[0]-list1[1][0]
+            err = arg2[0]-list4[1][0]
             mod2 = (x1**2+y1**2)**0.5
             err_deg = math.degrees(math.acos(x1/mod2))-90
             self.wheel_speed(err,err_deg)
-
-
 
 
 

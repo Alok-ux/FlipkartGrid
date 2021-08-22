@@ -4,7 +4,7 @@
 import rospy
 import re
 import math
-from std_msgs.msg import Int32MultiArray,String
+from std_msgs.msg import Int32,String
 from geometry_msgs.msg import Twist
 
 
@@ -22,6 +22,7 @@ class listen():
         rospy.init_node('listener2',anonymous=True)
         self.sub = rospy.Subscriber("apriltag_centre",String,self.callback)
         self.pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
+        self.pub2 = rospy.Publisher("bot_b",Int32,queue_size=10)
         self.msg = Twist()
         self.rate = rospy.Rate(30)
 
@@ -171,13 +172,6 @@ class listen():
             except rospy.ROSInterruptException as e:
                 print(e)
 
-        elif arg2[0] > list2[1][0]-66 and flag2 == True and deg > 85:
-            print("in 7")
-            err = arg2[0]-list2[1][0]
-            mod2 = (x1**2+y1**2)**0.5
-            err_deg = math.degrees(math.acos(x1/mod2))-90
-            self.wheel_speed(err,err_deg)
-
         elif arg2[1] < list2[0][1]:
             print("in 8")
             self.msg.linear.x = 0.0
@@ -191,10 +185,22 @@ class listen():
             try:
                 self.pub.publish(self.msg)
                 self.rate.sleep()
+                self.pub2.publish(2)
+                exit()
                 return True
-
             except rospy.ROSInterruptException as e:
                 print(e)
+
+
+        elif arg2[0] > list2[1][0]-66 and flag2 == True and deg > 80:
+            print("in 7")
+            err = arg2[0]-list2[1][0]
+            mod2 = (x1**2+y1**2)**0.5
+            err_deg = math.degrees(math.acos(x1/mod2))-90
+            self.wheel_speed(err,err_deg)
+
+
+
 
 
 
