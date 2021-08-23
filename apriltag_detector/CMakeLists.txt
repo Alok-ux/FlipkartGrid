@@ -8,11 +8,16 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   cv_bridge
+  dynamic_reconfigure
 )
 
+generate_dynamic_reconfigure_options(
+  cfg/LineParam.cfg
+)
 catkin_package(
   DEPENDS
 )
+
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
