@@ -38,3 +38,7 @@ catkin_install_python(PROGRAMS  scripts/node4.py
 catkin_install_python(PROGRAMS  scripts/node5.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+catkin_install_python(PROGRAMS  scripts/node6.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

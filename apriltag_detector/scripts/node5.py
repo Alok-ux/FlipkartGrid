@@ -23,6 +23,7 @@ class listen():
         self.sub = rospy.Subscriber("apriltag_centre",String,self.callback)
         self.pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
         self.pub4 = rospy.Publisher("bot_d",Int32,queue_size=10)
+        self.pubn = rospy.Publisher("bot_no_4",Int32,queue_size=10)
         self.msg = Twist()
         self.rate = rospy.Rate(30)
 
@@ -184,6 +185,8 @@ class listen():
             flag2 = True
             try:
                 self.pub.publish(self.msg)
+                self.pub4.publish(4)
+                self.pubn.publish(4)
                 self.rate.sleep()
                 exit()
                 return True

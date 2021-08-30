@@ -23,6 +23,7 @@ class listen():
         self.sub = rospy.Subscriber("apriltag_centre",String,self.callback)
         self.pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
         self.pub2 = rospy.Publisher("bot_b",Int32,queue_size=10)
+        self.pubn = rospy.Publisher("bot_no_2",Int32,queue_size=10)
         self.msg = Twist()
         self.rate = rospy.Rate(30)
 
@@ -184,8 +185,9 @@ class listen():
             flag2 = True
             try:
                 self.pub.publish(self.msg)
-                self.rate.sleep()
                 self.pub2.publish(2)
+                self.pubn.publish(2)
+                self.rate.sleep()
                 exit()
                 return True
             except rospy.ROSInterruptException as e:
