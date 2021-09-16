@@ -93,7 +93,6 @@ if(rm>0) {
   digitalWrite(in_1, LOW);
   digitalWrite(in_2, HIGH);
  }
- 
                               //Left motor direction
  if(lm>0) {
  digitalWrite(in_3, HIGH);
@@ -113,9 +112,7 @@ if(rm>0) {
  }
  else {
   myservo.write(0);
- }
-
-   
+ }  
 }
 
 
