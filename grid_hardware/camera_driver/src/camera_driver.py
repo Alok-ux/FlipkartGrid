@@ -30,7 +30,7 @@ class CameraDriver:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Camera Driver')
-    parser.add_argument('source', nargs='?', type=str, default='0')
+    parser.add_argument('source', nargs='?', type=str, default='2')
     parser.add_argument('-t', '--topic', type=str, default='/overhead_camera/image_raw')
     args = parser.parse_args()
 
