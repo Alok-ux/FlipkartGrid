@@ -47,6 +47,7 @@ class listener():
                     self.str1 = "("+str(cn[0])+","+str(cn[1])+")"
                     self.str2 = "("+str(pte[0])+","+str(pte[1])+")"
                     self.stri = self.str1+self.str2
+                    print(self.stri)
                     self.publ1(self.stri)
 
                     cv2.rectangle(self.image,pta,ptc,(0,255,0),2)
