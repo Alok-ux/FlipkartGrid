@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 #author: Debanshu
 #token: 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
@@ -58,7 +59,7 @@ class listen():
         err_speed = p*(err-err_ang)
         rd = int(base_speed+err_speed)
         ld = int(base_speed-err_speed)
-        self.msg = str(rd)+str(ld)+'0'
+        self.msg = str(rd)+","+str(ld)+","+"0"
         try:
             self.pub.publish(self.msg)
             self.rate.sleep()
