@@ -6,14 +6,14 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Int32,String
 from cv_bridge import CvBridge, CvBridgeError
 
-list= [[274,56],[270,315],[]]
+list= [[304,115],[287,374],[]]
 
 class listener():
     def __init__(self):
         rospy.init_node('listener',anonymous = True)
-        self.pub1 = rospy.Publisher("apriltag_centre1",String,queue_size = 10)
+        self.pub1 = rospy.Publisher("apriltag_centre1",String,queue_size = 1)
         self.sub1 = rospy.Subscriber("/overhead_camera/image_raw",Image,self.april)
-        self.rate = rospy.Rate(30)
+        self.rate = rospy.Rate(300)
         self.bridge = CvBridge()
     def april(self, data):
         # cap = cv2.VideoCapture(2)
@@ -60,7 +60,7 @@ class listener():
             self.str = str(cn[0])+" "+str(cn[1])+" "+str(pte[0])+" "+str(pte[1])
         frame = cv2.line(frame, (list[1][0],list[1][1]), (list[0][0],list[0][1]), (0,255,0), 2)
         cv2.imshow("Frame", frame)
-        if cv2.waitKey(10) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             pass
         self.pub1.publish(self.str)
 

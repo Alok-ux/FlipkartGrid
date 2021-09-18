@@ -3,29 +3,62 @@
 import cv2
 import rospy
 import argparse
-
+import apriltag
 from sensor_msgs.msg import Image
+from std_msgs.msg import Int32,String
 from cv_bridge import CvBridge, CvBridgeError
 
+list= [[304,112],[278,361],[]]
 
 class CameraDriver:
     def __init__(self, args):
         rospy.init_node('camera_driver')
-        self.pub = rospy.Publisher(args.topic, Image, queue_size=1)
+        # self.pub = rospy.Publisher(args.topic, Image, queue_size=1)
+        self.pub1 = rospy.Publisher("apriltag_centre1",String,queue_size = 1)
         self.bridge = CvBridge()
         self.source = int(args.source) if args.source.isdigit() else args.source
 
     def publish(self):
         cap = cv2.VideoCapture(self.source)
+        # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
+        # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+        print(cap.get(cv2.CAP_PROP_FPS))
+
         while cap.isOpened() and not rospy.is_shutdown():
             ret, frame = cap.read()
             if not ret:
                 break
             try:
-                msg = self.bridge.cv2_to_imgmsg(frame, 'bgr8')
-                self.pub.publish(msg)
+                # frame=self.bridge.imgmsg_to_cv2(data, 'bgr8')
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                options = apriltag.DetectorOptions('tag36h11')
+                detector = apriltag.Detector(options)
+                results = detector.detect(gray)
+                ptr=""
+                for i in results:
+                    pta , ptb ,ptc ,ptd = i.corners
+                    cn = i.center
+                    pta = (int(pta[0]),int(pta[1]))
+                    ptb = (int(ptb[0]),int(ptb[1]))
+                    ptc = (int(ptc[0]),int(ptc[1]))
+                    ptd = (int(ptd[0]),int(ptd[1]))
+                    pte = (int((pta[0]+ptb[0])/2),int((pta[1]+ptb[1])/2))
+                    cn = (int(cn[0]),int(cn[1]))
+                    print("center: ",cn[0]," ",cn[1])
+                    cv2.rectangle(frame,pta,ptc,(0,255,0),2)
+                    cv2.circle(frame,cn,3,(0,0,255),-1)
+                    cv2.circle(frame,pte,3,(0,0,255),-1)
+                    ptr = str(cn[0])+" "+str(cn[1])+" "+str(pte[0])+" "+str(pte[1])
+                frame = cv2.line(frame, (list[1][0],list[1][1]), (list[0][0],list[0][1]), (0,255,0), 2)
+                cv2.imshow("Frame", frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    pass
+                self.pub1.publish(ptr)
+                # msg = self.bridge.cv2_to_imgmsg(frame, 'bgr8')
+                # self.pub.publish(msg)
             except CvBridgeError as e:
                 print(e)
+
 
 
 if __name__ == '__main__':

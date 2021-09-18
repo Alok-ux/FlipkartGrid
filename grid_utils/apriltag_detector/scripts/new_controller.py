@@ -6,7 +6,7 @@ from std_msgs.msg import Int32
 import math
 
 kp = 20
-list1 = [[274,56],[270,315],[]]
+list1= [[304,112],[278,361],[]]
 deg = 0
 w1=1
 w2=0
@@ -15,12 +15,12 @@ class listen():
     def __init__(self):
         rospy.init_node("bota",anonymous=True)
         self.sub = rospy.Subscriber("apriltag_centre1",String,self.callback)
-        self.pub1 = rospy.Publisher("wifi",String,queue_size=10)
-        self.pub = rospy.Publisher("err",String,queue_size=10)
+        self.pub1 = rospy.Publisher("wifi",String,queue_size=1)
+        self.pub = rospy.Publisher("err",String,queue_size=1)
         # self.c_err = rospy.Publisher("c_err",Int32,queue_size=10)
         # self.a_err = rospy.Publisher("a_err",Int32,queue_size=10)
         # self.t_err = rospy.Publisher("t_err",Int32,queue_size=10)
-        self.rate = rospy.Rate(30)
+        self.rate = rospy.Rate(300)
 
     def callback(self,data):
         self.centre = data
@@ -47,7 +47,7 @@ class listen():
             # print("total error",total_error)
             # self.c_error.pub(err)
             # self.a_error.pub(err_angle)
-            self.wheel_speed(85,err,err_angle)
+            self.wheel_speed(95,err,err_angle)
 
         elif cy > list1[1][1]-30 :
             self.wheel_speed(0,0,0)
@@ -66,7 +66,7 @@ class listen():
         # print("total_error: ",err_speed)
         # self.t_error.pub(total_error)
 
-        err_speed=self.trim(err_speed,25)
+        err_speed=self.trim(err_speed,15)
         rs = int(base_speed + err_speed)
         ls = int(base_speed - err_speed)
         print("track error:",err," ls: ",ls ," rs ",rs)
