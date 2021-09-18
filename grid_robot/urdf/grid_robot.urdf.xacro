@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<robot name="makara" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="M_PI" value="3.1415926535897931" />
+  <xacro:arg name="april_tag" default="AprilTag">
+
+  <xacro:include filename="$(find grid_robot)/urdf/grid_robot_base.urdf.xacro" />
+  <xacro:grid_robot_base april_tag="$(arg april_tag)"/>
+</robot>
