@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import rospy
 import cv2
 import apriltag
@@ -13,7 +13,7 @@ flag=0
 reverse=0
 turn=0
 kp,ki,kd=1.00,0.01,0.01
-list1=[[271,57],[271,214],[271, 57]]#coordinates of s1,turning point and d1
+list1=[[888, 168],[858, 791],[346, 720]]#coordinates of s1,turning point and d1
 rev_turn=0
 turn_fl1,turn_fl2,rev_fl,rev,stop,flag=0,0,0,0,0,0
 class PubNode:
@@ -25,7 +25,7 @@ class PubNode:
         #self.msg = Twist()
 
     def wheel_speed(self,err,err_deg):
-        base_speed = 90
+        base_speed = -100
         err_speed=kp*(err-err_deg)
         rs = int(base_speed-err_speed)
         ls = int(base_speed+err_speed)
@@ -91,7 +91,7 @@ class PubNode:
              print("in 5")
              rs =-200
              ls = 0
-             self.msg = str(rs)+','+str(ls)+','+'0'
+            self.msg = str(rs)+','+str(ls)+','+'0'
              rev=1
              #print("Reverse")
              try:

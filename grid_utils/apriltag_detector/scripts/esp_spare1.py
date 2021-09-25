@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import rospy
 import telnetlib
@@ -15,10 +15,9 @@ class listen():
             HOST = "192.168.29.105" #enter ip address
             port = "8888" #enter port no
             tn = telnetlib.Telnet(HOST, port)
-            # msg = "{},{},0\r".format(int(data.left_rpm*10), int(data.right_rpm*10))
-            msg = str(self.s+"\r")#string of pwm values
+            msg = str(self.s)#string of pwm values
             tn.write(msg.encode('ascii'))
-            tn.close()
+
 
         except rospy.ROSInterruptException as e:
             print(e)

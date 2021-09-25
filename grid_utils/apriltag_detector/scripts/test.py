@@ -12,14 +12,22 @@
 #     a= input()
 import websocket
 ws= websocket.WebSocket()
-ws.connect("ws://192.168.29.105:8888")
-msg = "220,0,500"
-# for i in range(85,120):
-#     msg = "{},{},0".format(i,i)
-#     print(msg)
-#     ws.send(msg)
-#     ws.recv()
-#     k=input()
-ws.send(msg)
+ws.connect("ws://192.168.29.232:8888")
+# msg = "150,0,0"
+for i in range(0,3):
+    if i==0:
+        msg = "-120,-110,0"
+    elif i==1:
+        msg = "0,0,0"
+    else:
+        msg = "0,0,1"
+    print(msg)
+    ws.send(msg)
+    k=input()
+# msg = "0,0,1"
+# ws.send(msg)
+# ws.recv()
+# k=input()
+# ws.send(msg)
 k=input()
 ws.close()
