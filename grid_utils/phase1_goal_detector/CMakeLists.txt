@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(grid_phase1_controller)
+project(phase1_goal_detector)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -9,7 +9,6 @@ project(grid_phase1_controller)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   rospy
-  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -87,9 +86,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-  cfg/Pid.cfg
-)
+# generate_dynamic_reconfigure_options(
+#   cfg/DynReconf1.cfg
+#   cfg/DynReconf2.cfg
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -101,9 +101,8 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    DEPENDS
 #  INCLUDE_DIRS include
-#  LIBRARIES grid_phase1_controller
+#  LIBRARIES phase1_goal_detector
 #  CATKIN_DEPENDS rospy
 #  DEPENDS system_lib
 )
@@ -121,7 +120,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/grid_phase1_controller.cpp
+#   src/${PROJECT_NAME}/phase1_goal_detector.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -132,7 +131,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/grid_phase1_controller_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/phase1_goal_detector_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -196,7 +195,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_grid_phase1_controller.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_phase1_goal_detector.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
