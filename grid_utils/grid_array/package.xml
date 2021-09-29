@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>phase1_goal_detector</name>
+  <name>grid_array</name>
   <version>0.0.0</version>
-  <description>The phase1_goal_detector package</description>
+  <description>The grid_array package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
