@@ -11,7 +11,7 @@ from differential_drive.msg import DiffRPM
 
 from dynamic_reconfigure.server import Server
 from grid_phase1_controller.cfg import PidConfig
-
+from grid_array.srv import GridArray, GridArrayRequest
 
 class Controller:
     def __init__(self, args):
@@ -33,13 +33,15 @@ class Controller:
                            [(100, 100), (200, 200), (300, 300), (400, 400)],
                            [(100, 100), (200, 200), (300, 300), (400, 400)]]
 
-        rospy.loginfo('waiting for %s server', args.srv)
-        rospy.wait_for_service(args.srv)
+        rospy.loginfo('waiting for %s server', args.srv_name)
+        rospy.wait_for_service(args.srv_name)
         rospy.loginfo('waiting for %s topic', args.image_topic)
-        image = rospy.wait_for_message(args.image_topic, Image)
+
+        req = GridArrayRequest()
+        req.image = rospy.wait_for_message(args.image_topic, Image)
         try:
-            track_detector = rospy.ServiceProxy('track_detector', GridArray)
-            self.goal_array = track_detector(image)
+            service = rospy.ServiceProxy(args.srv_name, GridArray)
+            self.goal_array = service(req)
         except rospy.ServiceException as e:
             rospy.loginfo("Service call failed: %s", e)
 
@@ -130,6 +132,9 @@ if __name__ == '__main__':
     parser.add_argument('--rpm_topic', type=str,
                         default='/grid_robot/rpm',
                         help='rpm topic, default: /grid_robot/rpm')
+    parser.add_argument('--srv_name', type=str,
+                        default='get_grid_array',
+                        help='srv name, default: get_grid_array')
 
     args = parser.parse_args()
     controller = Controller(args)
