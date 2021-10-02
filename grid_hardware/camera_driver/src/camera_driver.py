@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import cv2
 import rospy
@@ -15,12 +15,12 @@ class CameraDriver:
         self.source = int(args.source) if args.source.isdigit() else args.source
         self.loop = args.loop
         rospy.loginfo("Camera driver started at %s", args.source)
-        self.rate = rospy.Rate(60)
+        # self.rate = rospy.Rate(60)
 
     def publish(self):
         cap = cv2.VideoCapture(self.source)
-        # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
-        # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
         rospy.loginfo("FPS: %s", cap.get(cv2.CAP_PROP_FPS))
 
         while cap.isOpened() and not rospy.is_shutdown():
@@ -34,7 +34,7 @@ class CameraDriver:
             try:
                 msg = self.bridge.cv2_to_imgmsg(frame, 'bgr8')
                 self.pub.publish(msg)
-                self.rate.sleep()
+                # self.rate.sleep()
             except CvBridgeError as e:
                 print(e)
 

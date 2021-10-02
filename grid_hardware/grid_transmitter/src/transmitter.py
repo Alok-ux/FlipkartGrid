@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import rospy
 import argparse
 import telnetlib
 import websocket
-from differential_drive.msg import DiffRPM
+from grid_transmitter.msg import PwmCombined
 
 class Transmitter:
     def __init__(self, args):
         rospy.init_node('transmitter_{}'.format(args.namespace))
-        rospy.Subscriber('{}_{}'.format(args.topic, args.namespace), DiffRPM, self.callback)
+        rospy.Subscriber('{}_{}'.format(args.topic, args.namespace), PwmCombined, self.callback)
         self.telnet_flag = args.telnet
 
         default_ip = ['192.168.29.147', '192.168.29.147', '192.168.29.147', '192.168.29.147']
@@ -41,13 +41,13 @@ class Transmitter:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('namespace', type=int, default=0,
-                        help='robot namespace, default:0')
+                        help='robot namespace, default: 0')
     parser.add_argument('--ip', type=str, default='',
-                        help='robot ip address, default:""')
-    parser.add_argument('--topic', type=str, default='/grid_robot/rpm',
-                        help='rpm ros topic, default:/grid_robot/rpm')
+                        help='robot ip address, default: ""')
+    parser.add_argument('--topic', type=str, default='/grid_robot/pwm',
+                        help='pwm ros topic, default: /grid_robot/pwm')
     parser.add_argument('--port', type=int, default=8888,
-                        help='port, default:8888')
+                        help='port, default: 8888')
     parser.add_argument('--telnet', action='store_true',
                         help='use telnet comm')
     args = parser.parse_args()
