@@ -1158,9 +1158,9 @@ Distributor: &lt;a href ="https://www.buerklin.com/default.asp?event=ShowArtikel
 <attribute name="VALUE" x="-41.91" y="88.9" size="1.778" layer="96"/>
 <attribute name="NAME" x="-41.91" y="102.362" size="1.778" layer="95"/>
 </instance>
-<instance part="SV4" gate="G$1" x="48.26" y="68.58" smashed="yes">
-<attribute name="VALUE" x="46.99" y="60.96" size="1.778" layer="96"/>
-<attribute name="NAME" x="46.99" y="74.422" size="1.778" layer="95"/>
+<instance part="SV4" gate="G$1" x="45.72" y="68.58" smashed="yes">
+<attribute name="VALUE" x="44.45" y="60.96" size="1.778" layer="96"/>
+<attribute name="NAME" x="44.45" y="74.422" size="1.778" layer="95"/>
 </instance>
 <instance part="S2" gate="1" x="96.52" y="101.6" smashed="yes">
 <attribute name="VALUE" x="90.805" y="104.775" size="1.778" layer="96" rot="R90"/>
@@ -1204,7 +1204,7 @@ Distributor: &lt;a href ="https://www.buerklin.com/default.asp?event=ShowArtikel
 </segment>
 <segment>
 <pinref part="SV4" gate="G$1" pin="2"/>
-<wire x1="55.88" y1="68.58" x2="58.42" y2="68.58" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="68.58" x2="58.42" y2="68.58" width="0.1524" layer="91"/>
 <label x="60.96" y="68.58" size="1.778" layer="95"/>
 </segment>
 <segment>
@@ -1306,7 +1306,7 @@ Distributor: &lt;a href ="https://www.buerklin.com/default.asp?event=ShowArtikel
 <net name="P+" class="0">
 <segment>
 <pinref part="SV4" gate="G$1" pin="3"/>
-<wire x1="55.88" y1="71.12" x2="58.42" y2="71.12" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="71.12" x2="58.42" y2="71.12" width="0.1524" layer="91"/>
 <label x="60.96" y="71.12" size="1.778" layer="95"/>
 </segment>
 <segment>
@@ -1328,7 +1328,7 @@ Distributor: &lt;a href ="https://www.buerklin.com/default.asp?event=ShowArtikel
 <net name="B-" class="0">
 <segment>
 <pinref part="SV4" gate="G$1" pin="1"/>
-<wire x1="55.88" y1="66.04" x2="58.42" y2="66.04" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="66.04" x2="58.42" y2="66.04" width="0.1524" layer="91"/>
 <label x="60.96" y="66.04" size="1.778" layer="95"/>
 </segment>
 <segment>
