@@ -1318,11 +1318,17 @@ Distributor: &lt;a href ="https://www.buerklin.com/default.asp?event=ShowArtikel
 <pinref part="S2" gate="1" pin="P"/>
 <wire x1="96.52" y1="96.52" x2="96.52" y2="93.98" width="0.1524" layer="91"/>
 <label x="96.52" y="96.52" size="1.778" layer="95"/>
+<pinref part="S2" gate="2" pin="P"/>
+<wire x1="106.68" y1="96.52" x2="106.68" y2="93.98" width="0.1524" layer="91"/>
+<wire x1="106.68" y1="93.98" x2="96.52" y2="93.98" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="S2" gate="1" pin="S"/>
-<wire x1="99.06" y1="106.68" x2="99.06" y2="111.76" width="0.1524" layer="91"/>
 <label x="104.14" y="111.76" size="1.778" layer="95"/>
+<pinref part="S2" gate="2" pin="O"/>
+<wire x1="104.14" y1="106.68" x2="99.06" y2="106.68" width="0.1524" layer="91"/>
+<wire x1="99.06" y1="111.76" x2="99.06" y2="106.68" width="0.1524" layer="91"/>
+<junction x="99.06" y="106.68"/>
 </segment>
 <segment>
 <pinref part="JP1" gate="G$1" pin="1"/>
