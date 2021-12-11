@@ -159,6 +159,8 @@
 <dimension x1="52.07" y1="42.116090625" x2="52.07" y2="34.083909375" x3="68.58" y3="38.1" textsize="1.778" layer="1" dtype="diameter"/>
 <circle x="51.943" y="22.987" radius="4.016090625" width="0.1778" layer="1"/>
 <dimension x1="51.97365625" y1="27.002975" x2="51.91234375" y2="18.971025" x3="68.58" y3="22.86" textsize="1.778" layer="1" dtype="diameter"/>
+<text x="17.78" y="44.45" size="1.778" layer="16">CYBORG</text>
+<text x="14.478" y="4.953" size="1.778" layer="16">MADE BY- NIPEN</text>
 </plain>
 <libraries>
 <library name="pinhead" urn="urn:adsk.eagle:library:325">
@@ -1072,10 +1074,10 @@ design rules under a new name.</description>
 <wire x1="45.72" y1="42.926" x2="42.926" y2="40.132" width="0.8128" layer="16"/>
 <wire x1="42.926" y1="22.86" x2="42.926" y2="40.132" width="0.8128" layer="16"/>
 <wire x1="40.894" y1="38.1" x2="42.926" y2="40.132" width="0.8128" layer="16"/>
-<wire x1="42.926" y1="22.86" x2="44.958" y2="22.86" width="0.8128" layer="16"/>
-<wire x1="46.101" y1="12.1158" x2="51.3842" y2="6.8326" width="0.8128" layer="16"/>
-<wire x1="44.958" y1="22.86" x2="46.101" y2="21.717" width="0.8128" layer="16"/>
-<wire x1="46.101" y1="21.717" x2="46.101" y2="12.1158" width="0.8128" layer="16"/>
+<wire x1="42.926" y1="22.86" x2="45.593" y2="22.86" width="0.8128" layer="16"/>
+<wire x1="46.99" y1="11.2268" x2="51.3842" y2="6.8326" width="0.8128" layer="16"/>
+<wire x1="45.593" y1="22.86" x2="46.99" y2="21.463" width="0.8128" layer="16"/>
+<wire x1="46.99" y1="21.463" x2="46.99" y2="11.2268" width="0.8128" layer="16"/>
 <wire x1="45.63010625" y1="45.974" x2="38.481" y2="48.26" width="0" layer="19" extent="16-16"/>
 <wire x1="44.8818" y1="6.8326" x2="51.3842" y2="6.8326" width="0" layer="19" extent="1-1"/>
 <wire x1="38.481" y1="17.78" x2="42.926" y2="22.86" width="0" layer="19" extent="1-1"/>
@@ -1160,9 +1162,9 @@ design rules under a new name.</description>
 <contactref element="SV4" pad="1"/>
 <contactref element="S1" pad="3"/>
 <contactref element="S1" pad="4"/>
-<wire x1="59.817" y1="42.799" x2="56.525759375" y2="46.090240625" width="0.8128" layer="16"/>
-<wire x1="59.817" y1="42.799" x2="59.817" y2="7.2136" width="0.8128" layer="16"/>
-<wire x1="59.817" y1="7.2136" x2="54.9148" y2="2.3114" width="0.8128" layer="16"/>
+<wire x1="59.563" y1="43.053" x2="56.525759375" y2="46.090240625" width="0.8128" layer="16"/>
+<wire x1="59.563" y1="43.053" x2="59.563" y2="6.9596" width="0.8128" layer="16"/>
+<wire x1="59.563" y1="6.9596" x2="54.9148" y2="2.3114" width="0.8128" layer="16"/>
 <wire x1="51.3842" y1="2.3114" x2="54.9148" y2="2.3114" width="0.8128" layer="16"/>
 <wire x1="51.2572" y1="2.3114" x2="51.3842" y2="2.3114" width="0.8128" layer="16"/>
 <wire x1="56.525759375" y1="46.090240625" x2="48.376240625" y2="46.090240625" width="0.8128" layer="16"/>
@@ -1432,6 +1434,10 @@ design rules under a new name.</description>
 <mfgpreviewcolor name="coppercolor" color="0xFFFFBF00"/>
 <mfgpreviewcolor name="substratecolor" color="0xFF786E46"/>
 </mfgpreviewcolors>
+<errors>
+<approved hash="11,16,f453a2f2ec2eba8f"/>
+<approved hash="11,16,948083474da95a6e"/>
+</errors>
 </board>
 </drawing>
 <compatibility>

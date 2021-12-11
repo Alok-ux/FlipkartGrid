@@ -154,7 +154,6 @@
 <circle x="45.59861875" y="60" radius="0.335409375" width="0.001" layer="1"/>
 <circle x="45.59861875" y="57.5" radius="0.335409375" width="0.001" layer="1"/>
 <circle x="50.59861875" y="57.5" radius="0.335409375" width="0.001" layer="1"/>
-<dimension x1="-1.27" y1="44.45" x2="-1.27" y2="1.27" x3="-1.27" y3="22.86" textsize="1.778" layer="16"/>
 </plain>
 <libraries>
 <library name="pinhead" urn="urn:adsk.eagle:library:325">
