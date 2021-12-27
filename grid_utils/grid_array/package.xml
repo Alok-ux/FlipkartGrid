@@ -1,17 +1,16 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>grid_transmitter</name>
+  <name>grid_array</name>
   <version>0.0.0</version>
-  <description>The grid_transmitter package</description>
-
-  <maintainer email="120cr0648@nitrkl.ac.in">Anjan Mridha</maintainer>
-
+  <description>The grid_array package</description>
+  <maintainer email="arnabgudu.gs@gmail.com">Arnab Paikaray</maintainer>
   <license>TODO</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rospy</build_depend>
   <build_export_depend>rospy</build_export_depend>
   <exec_depend>rospy</exec_depend>
+
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
 

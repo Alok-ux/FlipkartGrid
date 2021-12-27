@@ -5,6 +5,7 @@ import rospy
 import math
 import apriltag
 import argparse
+
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from differential_drive.msg import DiffRPM
@@ -57,6 +58,7 @@ class Controller:
         try:
             self.image = self.bridge.imgmsg_to_cv2(data, 'bgr8')
             gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+
             options = apriltag.DetectorOptions()
             detector = apriltag.Detector(options)
             results = detector.detect(gray)
@@ -85,6 +87,7 @@ class Controller:
             cv2.imshow("frame", self.image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 rospy.signal_shutdown('keyboard interrupt')
+                
         except CvBridgeError as e:
             rospy.loginfo(e)
 
@@ -121,9 +124,9 @@ class Controller:
         self.msg.right_rpm = self.params['BS'] - balance
         self.pub.publish(self.msg)
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('grid_phase1_controller')
+    
     parser.add_argument('tag_id', type=int, default=1,
                         help='robot tag id, default: 1')
     parser.add_argument('--image_topic', type=str,
