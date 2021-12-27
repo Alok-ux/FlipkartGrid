@@ -3,13 +3,24 @@
 <launch>
     <arg name="robot_name" default="robot"/>
     <arg name="init_pose" default="-x 0 -y 0 -z 0"/>
-    <param name="robot_description" command="$(find xacro)/xacro '$(find grid_robot)/urdf/grid_robot.urdf'"/>
+    <arg name="april_tag" default="MoonLight"/>
 
-    <node name="spawn_robot" pkg="gazebo_ros" type="spawn_model"
-     args="$(arg init_pose) -urdf -param /robot_description -model $(arg robot_name)"
-     respawn="false" output="screen" />
+    <param
+        name="robot_description"
+        command="$(find xacro)/xacro '$(find grid_robot)/urdf/grid_robot.urdf' april_tag:=$(arg april_tag)"/>
 
-    <node name="robot_state_publisher" pkg="robot_state_publisher"
-        type="robot_state_publisher" output="screen"/>
+    <node
+        name="spawn_robot"
+        pkg="gazebo_ros"
+        type="spawn_model"
+        args="$(arg init_pose) -urdf -param /robot_description -model $(arg robot_name)"
+        respawn="false"
+        output="screen" />
+
+    <node
+        name="robot_state_publisher"
+        pkg="robot_state_publisher"
+        type="robot_state_publisher"
+        output="screen"/>
 
 </launch>
