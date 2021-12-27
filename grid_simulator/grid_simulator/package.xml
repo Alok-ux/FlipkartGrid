@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>grid_simulator</name>
+  <version>0.6.13</version>
+  <description>grid_simulator contains Gazebo and ROS packages for Flipkart Grid 3.0 Team B</description>
+
+  <author email="arnabgudu.gs@gmail.com">Arnab Paikaray</author>
+  <maintainer email="arnabgudu.gs@gmail.com">Arnab Paikaray</maintainer>
+  <license>None</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>grid_arena</exec_depend>
+  <exec_depend>grid_robot</exec_depend>
+  <export>
+    <metapackage/>
+  </export>
+</package>
