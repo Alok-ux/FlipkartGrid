@@ -18,8 +18,8 @@ class DifferentialDrive:
         w = data.angular.z
 
         msg = DiffRPM()
-        msg.right_rpm= (2 * v + w * self.wheel_separation) / (2 * self.wheel_diameter*3.14)
-        msg.left_rpm= (2*v - w*self.wheel_separation)/(2*self.wheel_diameter*3.14)
+        msg.right_rpm= (2 * v + w * self.wheel_separation)*60 / (2 * self.wheel_diameter*3.14)
+        msg.left_rpm= (2*v - w*self.wheel_separation)*60/(2*self.wheel_diameter*3.14)
         self.pub.publish(msg)
 
 if __name__ == '__main__':
