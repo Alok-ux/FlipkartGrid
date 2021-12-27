@@ -56,6 +56,7 @@ void setup() {
     Serial.println(":8888");
 
 }
+
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
 
     switch(type) {
@@ -87,7 +88,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
        }
             break;
     }
-
 }
 
 void moveBot(String ls,String rs,String sm){

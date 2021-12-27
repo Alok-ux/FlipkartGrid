@@ -18,16 +18,21 @@ class DifferentialDrive:
         w = data.angular.z
 
         msg = DiffRPM()
-        msg.right_rpm= (2 * v + w * self.wheel_separation) / (2 * self.wheel_diameter*3.14)
-        msg.left_rpm= (2*v - w*self.wheel_separation)/(2*self.wheel_diameter*3.14)
+        msg.right_rpm = (2 * v + w * self.wheel_separation) * 60 / (2 * self.wheel_diameter * 3.14)
+        msg.left_rpm =  (2 * v - w * self.wheel_separation) * 60 / (2 * self.wheel_diameter * 3.14)
+        rospy.loginfo(msg)
         self.pub.publish(msg)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cmd_vel', type=str, default='/grid_robot/cmd_vel')
-    parser.add_argument('--rpm', type=str, default='/grid_robot/rpm')
-    parser.add_argument('-s', '--separation', type=float, default=10)
-    parser.add_argument('-d', '--diameter', type=float, default=10)
+    parser.add_argument('--cmd_vel', type=str, default='/grid_robot/cmd_vel',
+                        help='cmd_vel topic, default:/grid_robot/cmd_vel')
+    parser.add_argument('--rpm', type=str, default='/grid_robot/rpm',
+                        help='rpm topic, default:/grid_robot/rpm')
+    parser.add_argument('-s', '--separation', type=float, default=10,
+                        help='wheel separation, default=10')
+    parser.add_argument('-d', '--diameter', type=float, default=10,
+                        help='wheel diameter, default=10')
     args = parser.parse_args()
 
     differential_drive = DifferentialDrive(args)
