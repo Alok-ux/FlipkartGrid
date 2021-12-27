@@ -1,25 +1,25 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+#include <WebSocketsServer.h>
+#include <Hash.h>
 #include <Servo.h>
-
-WiFiClient client;
-WiFiServer server(80);
+#define MAX_SRV_CLIENTS 1
 Servo myservo;
+WebSocketsServer webSocket = WebSocketsServer(8888);
 
 const char* ssid = "JioFibreArnab4G";
 const char* password = "arnabanup";
-
 #define en_A D5
 #define en_B D6
 #define in_1 D3
 #define in_2 D4
-#define in_3 D7
+#define in_3 D7  //D1 for 1 bot n D7 for other
 #define in_4 D8
-#define servoPin 5 //D2
+#define servoPin 4 //D2
 
-int lm,rm,ser; 
-  
+int lm,rm,ser;
+
 void setup() {
-  Serial.begin(115200);
   delay(10);
 //Declaring l293d control pins as Output
   pinMode(en_A, OUTPUT);
@@ -29,115 +29,115 @@ void setup() {
   pinMode(in_3, OUTPUT);
   pinMode(in_4, OUTPUT);
 
-  myservo.attach(servoPin); 
- 
-  Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
- 
-  WiFi.begin(ssid, password);
+  myservo.attach(servoPin);
 
-while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
- 
-  // Start the server
-  server.begin();
-  Serial.println("Server started");
- 
-  // Print the IP address on serial monitor
-  Serial.print("Use this URL to connect: ");
-  Serial.print("http://");    //URL IP to be typed in mobile/desktop browser
-  Serial.print(WiFi.localIP());
-  Serial.println("/");
- 
-}
+    Serial.begin(115200);
+    Serial.print("\n\n\nConnecting to ");
+    Serial.print(ssid);
+    WiFi.begin(ssid, password);
+    while(WiFi.status() != WL_CONNECTED) {
+        delay(100);
+        Serial.print(".");
 
-void loop() {
-  // Check if a client has connected
-  int a;
-  WiFiClient client = server.available();
-  if (!client) {
-    return;
-  }
-Serial.println("new client");
-  while(!client.available()){
-    delay(1);
-  }
-
-String request = client.readStringUntil('\r');
-  Serial.println(request);
-  client.flush();
-
-for(int i=5 ; i<request.length();i++)
-{
-  if(request[i]==' ')
-  {
-    a=i;
-  }
-    
-}
-String sub = request.substring(5,a);
-func(sub);
-
-                             //Right motor direction
-if(rm>0) {
- digitalWrite(in_1, HIGH);
- digitalWrite(in_2, LOW);
- }
- else {
-  digitalWrite(in_1, LOW);
-  digitalWrite(in_2, HIGH);
- }
-                              //Left motor direction
- if(lm>0) {
- digitalWrite(in_3, HIGH);
- digitalWrite(in_4, LOW);
- }
- else {
-  digitalWrite(in_3, LOW);
-  digitalWrite(in_4, HIGH);
- }
-                              //Speed of motors
- analogWrite(en_A, abs(rm));
- analogWrite(en_B, abs(lm));
-
-                              //Servo
- if(ser==1){
-   myservo.write(180);
- }
- else {
-  myservo.write(0);
- }  
-}
-
-
-void func(String sub)
-{
-  int k =0;
-  
-  int arr[4];
-  
-  for(int j=0;j<sub.length();j++)
-  {
-    if(sub[j]==',')
-    {
-       arr[k]=j;
-       k =k+1;
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(500);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(500);
     }
-   }
-  
-  lm = (sub.substring(0,arr[0])).toInt();
-  rm = (sub.substring(arr[0]+1,arr[1])).toInt();
-  ser = (sub.substring(arr[1]+1)).toInt();
-  
+    Serial.println("");
+    Serial.println("WiFi connected");
+
+    webSocket.begin();
+    webSocket.onEvent(webSocketEvent);
+    Serial.println("WebSocket Server started");
+    Serial.print("\nUse this URL to connect: ");
+    Serial.print("ws://");    //URL IP to be typed in mobile/desktop browser
+    Serial.print(WiFi.localIP());
+    Serial.println(":8888");
+
+}
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+
+    switch(type) {
+        case WStype_DISCONNECTED:
+            moveBot("0","0","0");
+            Serial.printf("[%u] Disconnected!\n", num);
+            break;
+        case WStype_CONNECTED:
+            {
+                IPAddress ip = webSocket.remoteIP(num);
+                Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+            }
+            break;
+        case WStype_TEXT:
+        {
+            Serial.printf("[%u] get Text: %s\n", num, payload);
+            int k=0;
+            String ls="",rs="",sm="";
+            while(payload[k]!=',')
+              ls+=(char)payload[k++];
+            k++;
+            while(payload[k]!=',')
+              rs+=(char)payload[k++];
+            k++;
+            while(k<length)
+              sm+=(char)payload[k++];
+            moveBot(ls,rs,sm);
+              webSocket.sendTXT(num, "ok");
+       }
+            break;
+    }
+}
+
+void moveBot(String ls,String rs,String sm){
+  lm = ls.toInt();
+  rm = rs.toInt();
+  ser = sm.toInt();
+
   Serial.println(lm);
   Serial.println(rm);
   Serial.println(ser);
 
+                               //Right motor direction
+  if(rm<0) {
+   digitalWrite(in_1, HIGH);
+   digitalWrite(in_2, LOW);
+   }
+  else {
+   digitalWrite(in_1, LOW);
+   digitalWrite(in_2, HIGH);
+   }
+
+                                //Left motor direction
+  if(lm<0) {
+   digitalWrite(in_3, HIGH);
+   digitalWrite(in_4, LOW);
+   }
+  else {
+   digitalWrite(in_3, LOW);
+   digitalWrite(in_4, HIGH);
+   }
+                                //Speed of motors
+   analogWrite(en_A, abs(rm));
+   analogWrite(en_B, abs(lm));
+
+   if(ser<0){
+      myservo.write(-ser);
+   }else if(ser==1){
+     myservo.write(180);
+   }
+   else if (ser==0) {
+     myservo.write(0);
+   }else{
+      Serial.println("delay..");
+     delay(ser);//(-100,100,600)  (+90, -90, +180, +360)
+     Serial.println("stop..");
+     moveBot("0","0","0");
+   }
 }
-  //GET /47,194,1,1,1 HTTP/1.1
+void loop() {
+
+   webSocket.loop();
+
+}
