@@ -6,10 +6,11 @@ import argparse
 import apriltag
 from std_msgs.msg import Int32,String
 import time
+import math
 
 
 
-list= [[304,112],[278,361],[]]
+list= [[304,112],[304,361],[]]
 
 class CameraDriver:
     def __init__(self, args):
@@ -47,11 +48,13 @@ class CameraDriver:
                     ptd = (int(ptd[0]),int(ptd[1]))
                     pte = (int((pta[0]+ptb[0])/2),int((pta[1]+ptb[1])/2))
                     cn = (int(cn[0]),int(cn[1]))
-                    pStr+= "Center [{}]: {},{} ".format(cn[0],cn[1])
+                    pStr+= "Center []: {},{} ".format(cn[0],cn[1])
                     cv2.rectangle(frame,pta,ptc,(0,255,0),2)
                     cv2.circle(frame,cn,3,(0,0,255),-1)
                     cv2.circle(frame,pte,3,(0,0,255),-1)
-                    ptr = str(cn[0])+" "+str(cn[1])+" "+str(pte[0])+" "+str(pte[1])
+                    theta= math.degrees(math.atan2(pte[1]-cn[1] , pte[0]-cn[0]))
+                    ptr = str(cn[0])+" "+str(cn[1])+" "+str(theta)
+                    print(ptr)
                     self.pub1.publish(ptr)
                 print(pStr)
                 if self.debug:

@@ -8,7 +8,7 @@ from differential_drive.msg import DiffRPM
 class DifferentialDrive:
     def __init__(self, args):
         rospy.init_node('differential_drive')
-        self.sub = rospy.Subscriber(args.cmd_vel, Twist, self.callback)
+        self.sub = rospy.Subscriber("cmd_vel", Twist, self.callback)
         self.pub = rospy.Publisher(args.rpm, DiffRPM, queue_size=10)
         self.wheel_separation = args.separation
         self.wheel_diameter= args.diameter
