@@ -1,82 +1,80 @@
 #!/usr/bin/env python3
 
-import rospy
-from std_msgs.msg import String
-from geometry_msgs import Twist
 import math
-
-kp_ang = 0.005
-ki_ang = 0
-kd_ang = 0.001
-kp_dist = 0.005
-ki_dist = 0
-kd_dist = 0.001
-prev_dist = 0
-prev_ang = 0
-I_dist = 0
-I_ang = 0
-act_dif_dist = 5
+import rospy
+import cv2
+import numpy as np
+from camera_driver.msg import GridPoseArray
+from grid_transmitter.msg import PwmCombined
+from std_msgs.msg import Float32
 
 
-class motion():
+class Motion():
     def __init__(self):
-        rospy.init_node("bot_motion", anonymous=True)
-        self.sub1 = rospy.Subscriber(
-            "apriltag_centre1", String, self.callback_pose)
-        # self.sub2= rospy.Subscriber("Co-ordinates from client",
-        # String , self.callback_co_ord)
-        self.pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
-        self.rate = rospy.Rate(10)
-        self.msg = Twist()
+        rospy.init_node("bot_motion")
 
-    def callback_pose(self, data):
-        pose = list(data.data.split(" "))
-        self.center = [pose[0], pose[1]]
-        self.ang = pose[2]
+        self.id = 0
+        self.pose = 0
+        self.kp, self.ki, self.kd = 1, 0.0, 0.0
+        self.intg, self.max_intg, self.lastError = 0.0, 1.0, 0.0
+        self.base_speed = 100
 
-    def callback_co_ord(self, data):
-        self.destination = list(data.data.split(" "))
+        self.msg = PwmCombined()
+        self.pub = rospy.Publisher(
+            '/grid_robot/pwm_1', PwmCombined, queue_size=10)
+        self.pub_error = rospy.Publisher('/error', Float32, queue_size=10)
+        rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback_pose)
+
+    def callback_pose(self, msg):
+        self.pose = [pose for pose in msg.poses if pose.id == self.id]
+        self.move()
 
     def move(self):
-        x1 = 304-self.center[0]
-        y1 = 361-self.center[1]
-        dist = (x1**2+y1**2)**0.5
-        deg1 = math.degrees(math.atan2(y1, x1))
-        ang = deg1-self.ang
-        if ang < -180:
-            ang += 360
-        if ang > 180:
-            ang -= 360
-        final_speed = list(self.pid(dist, ang))
-        vel = 100 + final_speed[0]*5
-        if dist < 5:
-            self.msg.linear.x = 0
-            self.msg.angular.z = 0
-        else:
-            self.msg.linear.x = vel
-            self.msg.angular.z = final_speed[1]
-        self.pub.publish(self.msg)
+        if len(self.pose):
+            # x1, x2, y1, y2 = self.pose[0].x, 379.52, self.pose[0].y, 43.52
 
-    def pid(self, dist, ang):
-        global kp_ang, ki_ang, kd_ang, kp_dist, ki_dist
-        global kd_dist, prev_dist, prev_ang, I_dist, I_ang
-        err_ang = ang
-        err_dist = dist
-        diff_dist = err_dist - I_dist
-        lim_dist = act_dif_dist - diff_dist
-        diff_ang = err_ang - I_ang
-        final_dist = kp_dist*lim_dist + ki_dist*lim_dist
-        final_ang = kp_ang*err_ang + ki_ang*err_ang + kd_ang*diff_ang
-        I_dist = err_dist
-        I_ang = err_ang
-        speed = [final_dist, final_ang]
+            x2, y2 = 488.1, 41.62
+            x1, y1 = self.pose[0].x, self.pose[0].y
+            target_angle = math.degrees(math.atan2(y2-y1, x2-x1))
+            robot_angle = math.degrees(self.pose[0].theta)
 
-        return speed
+            error = target_angle - robot_angle
+            if error > 180:
+                error -= 360
+            if error < -180:
+                error += 360
+
+            # image = np.ones((480, 640), dtype=np.uint8) * 0
+            # cv2.arrowedLine(image, (int(x1), int(y1)),
+            #                 (int(x2), int(y2)), (255, 0, 0), 2)
+            # cv2.imshow('image', image)
+            # cv2.waitKey(1)
+            # print(robot_angle, target_angle, error)
+            balance = self.pid(error)
+
+            print(self.base_speed, balance)
+
+            self.msg.left = int(self.base_speed + balance)
+            self.msg.right = int(self.base_speed - balance)
+            self.pub.publish(self.msg)
+            self.pub_error.publish(error)
+
+    def pid(self, error):
+        prop = error
+        self.intg += error
+        if self.intg >= self.max_intg:
+            self.intg = self.max_intg
+        if self.intg <= -self.max_intg:
+            self.intg = -self.max_intg
+        diff = error - self.lastError
+        self.lastError = error
+        return self.kp * prop + self.ki * self.intg + self.kd * diff
 
 
 if __name__ == '__main__':
-    obj = motion()
+    obj = Motion()
     try:
-        rospy.spin()
-    except Exception as e:
+        if not rospy.is_shutdown():
+            rospy.spin()
+    except rospy.ROSInterruptException as e:
         print(e)

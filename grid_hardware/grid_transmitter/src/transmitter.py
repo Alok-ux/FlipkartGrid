@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import argparse
@@ -6,13 +6,16 @@ import telnetlib
 import websocket
 from grid_transmitter.msg import PwmCombined
 
+
 class Transmitter:
     def __init__(self, args):
         rospy.init_node('transmitter_{}'.format(args.namespace))
-        rospy.Subscriber('{}_{}'.format(args.topic, args.namespace), PwmCombined, self.callback)
+        rospy.Subscriber('{}_{}'.format(
+            args.topic, args.namespace), PwmCombined, self.callback)
         self.telnet_flag = args.telnet
 
-        default_ip = ['192.168.29.147', '192.168.29.147', '192.168.29.147', '192.168.29.147']
+        default_ip = ['192.168.0.108', '192.168.0.106',
+                      '192.168.0.107', '192.168.0.109']
         ip = args.ip if args.ip != '' else default_ip[args.namespace]
 
         if args.telnet:

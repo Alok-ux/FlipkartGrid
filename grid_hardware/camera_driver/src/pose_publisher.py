@@ -30,7 +30,6 @@ class PoseCamDriver:
 
             # cap.set(3, 640)
             # cap.set(4, 480)
-
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             results = self.detector.detect(gray)
 
@@ -38,12 +37,12 @@ class PoseCamDriver:
 
             for result in results:
                 xc, yc = result.center
-                (x1, y1), (x2, y2) = result.corners[1], result.corners[2]
+                (x1, y1), (x2, y2) = result.corners[0], result.corners[1]
                 xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
                 msg = GridPose(id=result.tag_id, x=xc, y=yc)
                 msg.theta = math.atan2((yc-ym), (xc-xm))
 
-                #TODO: map pixel to real world coordinates (sanjeet)
+                # TODO: map pixel to real world coordinates (sanjeet)
 
                 cv.arrowedLine(frame, (int(xc), int(yc)),
                                (int(xm), int(ym)), (0, 255, 0), 2)
