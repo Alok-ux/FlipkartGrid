@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 
 # import sys
 import math
@@ -6,7 +6,7 @@ import rospy
 import argparse
 import apriltag
 import cv2 as cv
-from camera_driver import GridPose, GridPoseArray
+from camera_driver.msg import GridPose, GridPoseArray
 
 
 class PoseCamDriver:
@@ -43,9 +43,11 @@ class PoseCamDriver:
                 msg = GridPose(id=result.tag_id, x=xc, y=yc)
                 msg.theta = math.atan2((yc-ym), (xc-xm))
 
+                #TODO: map pixel to real world coordinates (sanjeet)
+
                 cv.arrowedLine(frame, (int(xc), int(yc)),
                                (int(xm), int(ym)), (0, 255, 0), 2)
-                array.append(msg)
+                array.poses.append(msg)
 
             self.pub.publish(array)
             cv.imshow('frame', frame)
