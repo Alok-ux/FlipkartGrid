@@ -40,7 +40,7 @@ class PoseCamDriver:
                 (x1, y1), (x2, y2) = result.corners[0], result.corners[1]
                 xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
                 msg = GridPose(id=result.tag_id, x=xc, y=yc)
-                msg.theta = math.atan2((yc-ym), (xc-xm))
+                msg.theta = math.atan2((ym-yc), (xm-xc))
 
                 # TODO: map pixel to real world coordinates (sanjeet)
 

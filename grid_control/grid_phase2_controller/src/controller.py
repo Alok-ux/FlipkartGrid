@@ -13,7 +13,7 @@ class Motion():
     def __init__(self):
         rospy.init_node("bot_motion")
 
-        self.id = 0
+        self.id = 5
         self.pose = 0
         self.kp, self.ki, self.kd = 1, 0.0, 0.0
         self.intg, self.max_intg, self.lastError = 0.0, 1.0, 0.0
@@ -21,13 +21,14 @@ class Motion():
 
         self.msg = PwmCombined()
         self.pub = rospy.Publisher(
-            '/grid_robot/pwm_1', PwmCombined, queue_size=10)
+            '/grid_robot/pwm_0', PwmCombined, queue_size=10)
         self.pub_error = rospy.Publisher('/error', Float32, queue_size=10)
         rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback_pose)
 
     def callback_pose(self, msg):
         self.pose = [pose for pose in msg.poses if pose.id == self.id]
-        self.move()
+        # self.move()
+        print(self.pose)
 
     def move(self):
         if len(self.pose):
