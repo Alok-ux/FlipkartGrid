@@ -3,35 +3,46 @@
 import math
 import rospy
 import cv2
+import argparse
 import numpy as np
 from camera_driver.msg import GridPoseArray
 from grid_transmitter.msg import PwmCombined
+from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Float32
 
 
 class Motion():
-    def __init__(self):
+    def __init__(self, id):
         rospy.init_node("bot_motion")
-        self.lis = [(145.59, 244.01), (293.6, 241.07),
-                    (287.15, 94.84), (141.44, 95.18)]
-        self.id = 0
+        self.lis = [(576.9, 332.51), (348.95, 332.90),
+                    (347.06, 182.24), (158.83, 181.98), (161.11, 145.02), (570.94, 146.38)]
+        self.id = id
         self.pose = 0
-        self.kp, self.ki, self.kd = 1, 0.0, 0.0
+        self.kp, self.ki, self.kd = 1, 0.0, 0.1
         self.intg, self.max_intg, self.lastError = 0.0, 1.0, 0.0
-        self.base_speed = 100
-        self.i = 0
+        self.base_speed = 110
+        self.i = 1
+        self.image = None
         self.msg = PwmCombined()
+        self.cv_bridge = CvBridge()
         self.pub = rospy.Publisher(
-            '/grid_robot/pwm_1', PwmCombined, queue_size=10)
+            '/grid_robot/pwm_{}'.format(self.id), PwmCombined, queue_size=10)
         self.pub_error = rospy.Publisher('/error', Float32, queue_size=10)
         rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback_pose)
 
     def callback_pose(self, msg):
         self.pose = [pose for pose in msg.poses if pose.id == self.id]
+        try:
+            self.image = self.cv_bridge.imgmsg_to_cv2(
+                msg.image, desired_encoding='bgr8')
+        except CvBridgeError as e:
+            print(e)
         self.move()
 
     def move(self):
+        print("Entering move")
         if len(self.pose):
+            # print("enterig move")
             # x1, x2, y1, y2 = self.pose[0].x, 379.52, self.pose[0].y, 43.52
 
             x2, y2 = self.lis[self.i]
@@ -40,7 +51,7 @@ class Motion():
             self.robot_angle = math.degrees(self.pose[0].theta)
             dist = ((x2-x1)**2+(y2-y1)**2)**0.5
 
-            if dist <= 40 and self.i < 3:
+            if dist <= 10 and self.i < 5:
                 self.msg.left = 0
                 self.msg.right = 0
                 self.pub.publish(self.msg)
@@ -50,13 +61,12 @@ class Motion():
                 error = self.target_angle - self.robot_angle
                 self.orient(error)
 
-            elif dist <= 40 and self.i >= 3:
+            elif dist <= 10 and self.i >= 5:
                 self.msg.left = 0
                 self.msg.right = 0
                 self.pub.publish(self.msg)
 
             else:
-                print("entering loop")
                 error = self.target_angle - self.robot_angle
                 if error > 180:
                     error -= 360
@@ -65,6 +75,7 @@ class Motion():
                 balance = self.pid(error)
                 self.msg.left = int(self.base_speed + balance)
                 self.msg.right = int(self.base_speed - balance)
+                # print(self.msg)
                 self.pub.publish(self.msg)
 
             # error = self.target_angle - self.robot_angle
@@ -100,15 +111,21 @@ class Motion():
         return self.kp * prop + self.ki * self.intg + self.kd * diff
 
     def orient(self, error):
+        print("Orient")
         if error > 20 or error < -20:
             balance = self.pid(error)
             self.msg.left = int(balance)
             self.msg.right = int(-balance)
+            print(self.msg)
             self.pub.publish(self.msg)
 
 
 if __name__ == '__main__':
-    obj = Motion()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('id', type=int, default=1,
+                        help='robot id, default: 1')
+    args = parser.parse_args()
+    obj = Motion(args.id)
     try:
         if not rospy.is_shutdown():
             rospy.spin()

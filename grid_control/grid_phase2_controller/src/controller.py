@@ -3,6 +3,7 @@
 import math
 import rospy
 import cv2
+import argparse
 import numpy as np
 from camera_driver.msg import GridPoseArray
 from grid_transmitter.msg import PwmCombined
@@ -10,10 +11,10 @@ from std_msgs.msg import Float32
 
 
 class Motion():
-    def __init__(self):
+    def __init__(self, id):
         rospy.init_node("bot_motion")
 
-        self.id = 5
+        self.id = id
         self.pose = 0
         self.kp, self.ki, self.kd = 1, 0.0, 0.0
         self.intg, self.max_intg, self.lastError = 0.0, 1.0, 0.0
@@ -21,13 +22,13 @@ class Motion():
 
         self.msg = PwmCombined()
         self.pub = rospy.Publisher(
-            '/grid_robot/pwm_0', PwmCombined, queue_size=10)
+            '/grid_robot/pwm_{}'.format(self.id), PwmCombined, queue_size=10)
         self.pub_error = rospy.Publisher('/error', Float32, queue_size=10)
         rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback_pose)
 
     def callback_pose(self, msg):
         self.pose = [pose for pose in msg.poses if pose.id == self.id]
-        # self.move()
+        self.move()
         print(self.pose)
 
     def move(self):
@@ -73,7 +74,12 @@ class Motion():
 
 
 if __name__ == '__main__':
-    obj = Motion()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('id', type=int, default=1,
+                        help='robot id, default: 1')
+    args = parser.parse_args()
+    obj = Motion(args.id)
+
     try:
         if not rospy.is_shutdown():
             rospy.spin()

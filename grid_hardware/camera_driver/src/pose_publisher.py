@@ -7,6 +7,7 @@ import argparse
 import apriltag
 import cv2 as cv
 from camera_driver.msg import GridPose, GridPoseArray
+from cv_bridge import CvBridge
 
 
 class PoseCamDriver:
@@ -16,6 +17,7 @@ class PoseCamDriver:
         self.detector = apriltag.Detector(options)
         self.pub = rospy.Publisher(
             'grid_robot/poses', GridPoseArray, queue_size=1)
+        self.cv_bridge = CvBridge()
         self.rate = rospy.Rate(2000)  # 10Hz
         self.source = int(source) if source.isdigit() else source
         rospy.loginfo("Camera Driver Started")
@@ -40,6 +42,7 @@ class PoseCamDriver:
                 (x1, y1), (x2, y2) = result.corners[0], result.corners[1]
                 xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
                 msg = GridPose(id=result.tag_id, x=xc, y=yc)
+                print(result.tag_id)
                 msg.theta = math.atan2((ym-yc), (xm-xc))
 
                 # TODO: map pixel to real world coordinates (sanjeet)
@@ -48,6 +51,7 @@ class PoseCamDriver:
                                (int(xm), int(ym)), (0, 255, 0), 2)
                 array.poses.append(msg)
 
+            array.image = self.cv_bridge.cv2_to_imgmsg(frame, encoding='bgr8')
             self.pub.publish(array)
             cv.imshow('frame', frame)
             if cv.waitKey(30) & 0xFF == ord('q'):
