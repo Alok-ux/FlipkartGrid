@@ -62,7 +62,7 @@ class PoseCamDriver:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('source', nargs='?', type=str, default=0)
+    parser.add_argument('source', nargs='?', type=str, default='0')
     parser.add_argument('tag_class', nargs='?', type=str, default='36h11')
     args = parser.parse_args()
     try:
