@@ -1,8 +1,8 @@
 #goal definition
-int32 order
+grid_phase2_controller/Goal[] order
 ---
 #result definition
-int32[] sequence
+camera_driver/GridPose pose
 ---
 #feedback
-int32[] sequence
+camera_driver/GridPose pose

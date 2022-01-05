@@ -5,6 +5,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   dynamic_reconfigure
   actionlib_msgs
+  message_generation
+  camera_driver
+  sensor_msgs
 )
 
 add_action_files(
@@ -12,15 +15,22 @@ add_action_files(
   FILES bot.action
 )
 
+add_message_files(
+  FILES
+  Goal.msg
+)
+
 generate_messages(
   DEPENDENCIES
   actionlib_msgs
   std_msgs
+  camera_driver
 )
 
 catkin_package(
     DEPENDS
     actionlib_msgs
+    message_runtime
 )
 
 include_directories(
