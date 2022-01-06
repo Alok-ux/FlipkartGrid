@@ -33,45 +33,32 @@ class InductStation:
         return iter(self.induct_list)
 
     def pop(self):
-        return self.induct_list.pop()
+        return self.induct_list.pop(0)
 
-class DropLocation:
-    def __init__(self, name, ):
-        self.name = name
-        self.pose = None
 
 class Robot:
     def __init__(self, id, done_cb):
         self.client = actionlib.SimpleActionClient('bot_{}_server'.format(id), botAction)
         self.done_cb = done_cb
         self.client.wait_for_server()
-        self.current_pose = None
-        self.prev_goal = None
+        self.curr_pose, self.prev_goal = None, None
 
     def preempt_goal(self):
         self.client.cancel_goal()
 
     def send_goal(self, path):
-        goal = Goal()
-        goal_list = []
-
-        for pose in path:
-            goal.t = pose['t']
-            goal.x = pose['x']
-            goal.y = pose['y']
-            goal_list.append(goal)
-
-        bot_goal = botGoal(order=goal_list)
+        bot_goal = botGoal(order=[Goal(t=pose['t'], x=pose['x'], y=pose['y']) for pose in path])
         self.client.send_goal(bot_goal, feedback_cb=self.callback_feedback, done_cb=self.done_cb)
 
     def callback_feedback(self, feedback):
-        self.current_pose = [feedback.pose.x, feedback.y]
+        self.curr_pose = [feedback.pose.x, feedback.y]
 
 class Automata:
     def __init__(self, num_bots, num_induct_stations, yaml_path):
         self.induct_station = [InductStation(i) for i in range(num_induct_stations)]
         self.bots = [Robot(i, self.done_cb) for i in range(num_bots)]
-        
+        self.drop_location_pose = {'x': 0, 'y': 0}
+
         with open(yaml_path, 'r') as param_file:
             try:
                 self.param = yaml.load(param_file, Loader=yaml.FullLoader)
@@ -85,19 +72,20 @@ class Automata:
         for i, bot in enumerate(self.bots):
             if result.result.id == bot.id:
                 # Goto induct station
-                self.param['agents'][i]['start'] = bot.current_pose
+                self.param['agents'][i]['start'] = bot.curr_pose
                 self.param['agents'][i]['goal'] = self.induct_station[i//4].pose
                 self.param['agents'][i]['name'] = 'agent'+str(i)
 
                 # Already in induct station & goto new destination
                 for i in self.induct_station:
-                    if i.pose == bot.current_pose:
+                    if i.pose == bot.curr_pose:
                         bot.prev_goal = self.param['agents'][i]['goal'] = self.induct_station[i].pop()
+                        time.sleep(2)
                         break
                 continue
 
             bot.preempt_goal()
-            self.param['agents'][i]['start'] = bot.current_pose
+            self.param['agents'][i]['start'] = bot.curr_pose
             self.param['agents'][i]['goal'] = bot.prev_goal
             self.param['agents'][i]['name'] = 'agent'+str(i)
         
