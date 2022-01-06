@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python
 
 # import sys
 import math
@@ -21,7 +21,7 @@ class PoseCamDriver:
         rospy.loginfo("Camera Driver Started")
 
     def read(self):
-        cap = cv.VideoCapture(self.source, cv.CAP_V4L)
+        cap = cv.VideoCapture(self.source)
         while not rospy.is_shutdown() and cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -30,6 +30,7 @@ class PoseCamDriver:
 
             # cap.set(3, 640)
             # cap.set(4, 480)
+            frame = frame[1:479, 41:593]
 
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             results = self.detector.detect(gray)
@@ -38,9 +39,11 @@ class PoseCamDriver:
 
             for result in results:
                 xc, yc = result.center
-                (x1, y1), (x2, y2) = result.corners[1], result.corners[2]
+                (x1, y1), (x2, y2) = result.corners[0], result.corners[1]
                 xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
-                msg = GridPose(id=result.tag_id, x=xc, y=yc)
+                self.i = int(math.floor(xc/34))
+                self.j = int(math.floor(yc/34))
+                msg = GridPose(id=result.tag_id,i = self.i,j = self.j, x=xc, y=yc)
                 msg.theta = math.atan2((yc-ym), (xc-xm))
 
                 #TODO: map pixel to real world coordinates (sanjeet)
