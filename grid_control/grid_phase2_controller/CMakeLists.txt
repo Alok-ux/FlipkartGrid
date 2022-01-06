@@ -6,7 +6,8 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   actionlib_msgs
   message_generation
-)
+  camera_driver
+  sensor_msgs
 
 add_action_files(
   DIRECTORY action
@@ -22,6 +23,7 @@ generate_messages(
   DEPENDENCIES
   actionlib_msgs
   std_msgs
+  camera_driver
 )
 
 catkin_package(

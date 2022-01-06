@@ -1,3 +1,3 @@
-uint8 left
-uint8 right
+int16 left
+int16 right
 uint8 servo

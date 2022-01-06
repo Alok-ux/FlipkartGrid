@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import argparse
@@ -6,14 +6,17 @@ import telnetlib
 import websocket
 from grid_transmitter.msg import PwmCombined
 
+
 class Transmitter:
     def __init__(self, args):
         rospy.init_node('transmitter_{}'.format(args.namespace))
-        rospy.Subscriber('{}_{}'.format(args.topic, args.namespace), PwmCombined, self.callback)
+        rospy.Subscriber('{}_{}'.format(
+            args.topic, args.namespace), PwmCombined, self.callback)
         self.telnet_flag = args.telnet
 
-        default_ip = ['192.168.29.147', '192.168.29.147', '192.168.29.147', '192.168.29.147']
-        ip = args.ip if args.ip != '' else default_ip[args.namespace]
+        default_ip = ['192.168.0.106', '192.168.0.108',
+                      '192.168.0.110', '192.168.0.111']
+        ip = args.ip if args.ip != '' else default_ip[args.namespace-1]
 
         if args.telnet:
             self.telnet = telnetlib.Telnet(ip, args.port)
@@ -35,6 +38,7 @@ class Transmitter:
             self.telnet.write(msg.encode("ascii"))
         else:
             self.websocket.send(msg)
+            print(msg)
             rospy.loginfo(self.websocket.recv())
 
 
@@ -51,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('--telnet', action='store_true',
                         help='use telnet comm')
     args = parser.parse_args()
-    assert 0 <= args.namespace <= 3
+    assert 1 <= args.namespace <= 4
 
     transmitter = Transmitter(args)
     try:

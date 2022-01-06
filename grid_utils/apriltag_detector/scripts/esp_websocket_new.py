@@ -3,20 +3,23 @@
 
 import websocket
 import rospy
+from std_msgs.msg import String
+from camera_driver.msg import DiffRPM
 
-from std_msgs.msg import String,Int32
+
 class listen():
-    def __init__(self,host):
-        rospy.init_node("wifi_transmitter",anonymous=True)
-        self.ws= websocket.WebSocket()
+    def __init__(self, host):
+        rospy.init_node("wifi_transmitter", anonymous=True)
+        self.ws = websocket.WebSocket()
         self.ws.connect("ws://"+host)
-        self.sub = rospy.Subscriber("wifi",String,self.callback)
-        self.ack = rospy.Publisher("recv",String,queue_size=1)
+        self.sub = rospy.Subscriber("rpm", DiffRPM, self.callback)
+        self.ack = rospy.Publisher("recv", String, queue_size=1)
 
-    def callback(self,data):
+    def callback(self, data):
         try:
-            # msg = str(data.data)
-            msg = "150,150,0"
+            msg = str(data.data) + str(data.data) + 0
+            msg
+            # msg = "150,150,0"
             print(msg)
             self.ws.send(msg)
             self.ack.publish(self.ws.recv())
@@ -24,8 +27,9 @@ class listen():
             print(e)
             self.ws.close()
 
+
 if __name__ == '__main__':
-    obj = listen("192.168.29.232:8888")
+    obj = listen("192.168.0.108:8888")
     try:
         rospy.spin()
     except Exception as e:
