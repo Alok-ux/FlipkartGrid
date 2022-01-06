@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   camera_driver
   sensor_msgs
-)
 
 add_action_files(
   DIRECTORY action
