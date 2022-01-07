@@ -67,7 +67,7 @@ class BotServer:
                 distance = math.sqrt((tx - x)**2 + (ty - y)**2)
 
                 # Publish feedback
-                self.feedback.pose = self.pose
+                self.feedback.x, self.feedback.y = self.pose.x, self.pose.y
                 self.server.publish_feedback(self.feedback)
 
                 # Plot target and robot
@@ -88,24 +88,25 @@ class BotServer:
                 if error < -180:
                     error += 360
 
-                # Goal completion condition
-                if distance < self.thresh_dist:
-                    base_speed = 0
-                    break
-
                 # Pid controller
                 balance = self.pid(error)
 
+                # Goal completion condition
+                if distance < self.thresh_dist:
+                    break
+
                 # Orient first if angle is too high
-                if -20 < error < 20:
-                    base_speed = self.base_speed
-                else:
-                    base_speed = 0
-                    if -100 < balance < 100:
-                        if balance > 0:
-                            balance += 50
-                        else:
-                            balance -= 50
+                # TODO: Write control code
+
+                # if -20 < error < 20:
+                #     base_speed = self.base_speed
+                # else:
+                #     base_speed = 0
+                #     if -100 < balance < 100:
+                #         if balance > 0:
+                #             balance += 50
+                #         else:
+                #             balance -= 50
 
                 self.msg.left = int(base_speed + balance)
                 self.msg.right = int(base_speed - balance)
@@ -128,7 +129,7 @@ class BotServer:
 
         # Publish result
         if success:
-            self.result.pose = self.pose
+            self.result.x, self.result.y = self.pose.x, self.pose.y
             self.server.set_succeeded(self.result)
 
         # Unregister from image feed after goal completion
