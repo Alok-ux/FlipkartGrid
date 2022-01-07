@@ -108,8 +108,8 @@ class BotServer:
                 #         else:
                 #             balance -= 50
 
-                self.msg.left = int(base_speed + balance)
-                self.msg.right = int(base_speed - balance)
+                # self.msg.left = int(base_speed + balance)
+                # self.msg.right = int(base_speed - balance)
                 self.pub.publish(self.msg)
                 self.rate.sleep()
 
