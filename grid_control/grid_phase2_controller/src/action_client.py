@@ -3,6 +3,7 @@
 import csv
 import yaml
 import time
+import rospy
 import rospkg
 import actionlib
 
@@ -45,18 +46,18 @@ class Robot:
         self.done_cb = done_cb
         self.client.wait_for_server()
         self.curr_pose, self.prev_goal = None, None
+        self.loaded_parcel = list()
 
     def preempt_goal(self):
         self.client.cancel_goal()
 
-    def send_goal(self, path):
-        bot_goal = botGoal(
-            order=[Goal(t=pose['t'], x=pose['x'], y=pose['y']) for pose in path])
+    def send_goal(self, goal):
+        bot_goal = botGoal(x=goal[0], y=goal[1])
         self.client.send_goal(
             bot_goal, feedback_cb=self.callback_feedback, done_cb=self.done_cb)
 
     def callback_feedback(self, feedback):
-        self.curr_pose = [feedback.pose.x, feedback.y]
+        self.curr_pose = [feedback.x, feedback.y]
 
 
 class Automata:
@@ -71,6 +72,9 @@ class Automata:
                 self.param = yaml.load(param_file, Loader=yaml.FullLoader)
             except yaml.YAMLError as exc:
                 print(exc)
+
+    def execute(self, num_pkg=-1):
+        pass
 
     def new_goal(self, station_id):
         return self.induct_station[station_id].pop()
@@ -105,9 +109,9 @@ class Automata:
 
 
 if __name__ == '__main__':
-    param = {'agents': [{'start': [0, 4], 'goal': [3, 5], 'name': 'agent0'},
-                        {'start': [0, 9], 'goal': [5, 3], 'name': 'agent1'}],
-             'map': {'dimensions': [15, 14], 'obstacles': [(0, 0), (0, 1), (0, 2), (0, 3), (0, 5), (0, 6), (0, 7), (0, 8), (0, 10), (0, 11), (0, 12), (0, 13), (3, 2), (3, 3), (4, 2), (4, 3), (3, 6), (3, 7), (4, 6), (4, 7), (3, 10), (3, 11), (4, 10), (4, 11), (7, 2), (7, 3), (8, 2), (8, 3), (7, 6), (7, 7), (8, 6), (8, 7), (7, 10), (7, 11), (8, 10), (8, 11), (11, 2), (11, 3), (12, 2), (12, 3), (11, 6), (11, 7), (12, 6), (12, 7), (11, 10), (11, 11), (12, 10), (12, 11)]}}
-    solution, env = solve(param)
-    print("param: {} \nsolution: {}".format(param, solution))
-    print("cost", env.compute_solution_cost(solution))
+    try:
+        automata = Automata()
+        if not rospy.is_shutdown():
+            rospy.spin()
+    except rospy.ROSInterruptException as e:
+        print(e)
