@@ -5,6 +5,7 @@ import yaml
 import time
 import rospkg
 import actionlib
+import time
 
 from grid_phase2_controller.msg import botAction, botGoal, Goal
 from cbs import solve
@@ -56,7 +57,8 @@ class Robot:
             bot_goal, feedback_cb=self.callback_feedback, done_cb=self.done_cb)
 
     def callback_feedback(self, feedback):
-        self.curr_pose = [feedback.pose.x, feedback.y]
+        self.curr_pose = [feedback.pose.x, feedback.pose.y]
+
 
 
 class Automata:
