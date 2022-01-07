@@ -6,6 +6,7 @@ import math
 import rospy
 import argparse
 import actionlib
+
 from cv_bridge import CvBridge, CvBridgeError
 from grid_phase2_controller.msg import botAction, botFeedback, botResult
 from camera_driver.msg import GridPoseArray
@@ -52,74 +53,73 @@ class BotServer:
         sub = rospy.Subscriber('/grid_robot/poses', GridPoseArray,
                                self.callback)
         time.sleep(0.5)
-        for target in goal.order:
-            while not rospy.is_shutdown():
-                try:
-                    # Get current pose & target pose
-                    x, y = self.pose.x, self.pose.y
+        while not rospy.is_shutdown():
+            try:
+                # Get current pose & target pose
+                x, y = self.pose.x, self.pose.y
 
-                    # TODO: Get target pose from goal
-                    tx, ty = target.x, target.y
+                # TODO: Get target pose from goal
+                tx, ty = goal.x, goal.y
 
-                    # Calculate distance & angle
-                    target_angle = math.degrees(math.atan2(ty - y, tx - x))
-                    robot_angle = math.degrees(self.pose.theta)
-                    distance = math.sqrt((tx - x)**2 + (ty - y)**2)
+                # Calculate distance & angle
+                target_angle = math.degrees(math.atan2(ty - y, tx - x))
+                robot_angle = math.degrees(self.pose.theta)
+                distance = math.sqrt((tx - x)**2 + (ty - y)**2)
 
-                    # Publish feedback
-                    self.feedback.pose = self.pose
-                    self.server.publish_feedback(self.feedback)
+                # Publish feedback
+                self.feedback.pose = self.pose
+                self.server.publish_feedback(self.feedback)
 
-                    # Plot target and robot
-                    if self.image is not None:
-                        cv2.arrowedLine(self.image, (int(x), int(y)),
-                                        (int(tx), int(ty)), (0, 0, 255), 2)
-                        cv2.circle(self.image, (int(tx), int(ty)),
-                                   self.thresh_dist, (255, 0, 0), 2)
-                        cv2.imshow("grid_robot_{}".format(self.id), self.image)
-                        cv2.waitKey(1)
+                # Plot target and robot
+                if self.image is not None:
+                    cv2.arrowedLine(self.image, (int(x), int(y)),
+                                    (int(tx), int(ty)), (0, 0, 255), 2)
+                    cv2.circle(self.image, (int(tx), int(ty)),
+                               self.thresh_dist, (255, 0, 0), 2)
+                    cv2.imshow("grid_robot_{}".format(self.id), self.image)
+                    cv2.waitKey(1)
 
-                    # Calculate error
-                    error = target_angle - robot_angle
+                # Calculate error
+                error = target_angle - robot_angle
 
-                    # Yaw angle correction
-                    if error > 180:
-                        error -= 360
-                    if error < -180:
-                        error += 360
+                # Yaw angle correction
+                if error > 180:
+                    error -= 360
+                if error < -180:
+                    error += 360
 
-                    # Goal completion condition
-                    if distance < self.thresh_dist:
-                        base_speed = 0
-                        break
+                # Goal completion condition
+                if distance < self.thresh_dist:
+                    base_speed = 0
+                    break
 
-                    # Pid controller
-                    balance = self.pid(error)
+                # Pid controller
+                balance = self.pid(error)
 
-                    # Orient first if angle is too high
-                    if -20 < error < 20:
-                        base_speed = self.base_speed
-                    else:
-                        base_speed = 0
-                        if -100 < balance < 100:
-                            if balance > 0:
-                                balance += 50
-                            else:
-                                balance -= 50
+                # Orient first if angle is too high
+                if -20 < error < 20:
+                    base_speed = self.base_speed
+                else:
+                    base_speed = 0
+                    if -100 < balance < 100:
+                        if balance > 0:
+                            balance += 50
+                        else:
+                            balance -= 50
 
-                    self.msg.left = int(base_speed + balance)
-                    self.msg.right = int(base_speed - balance)
-                    self.pub.publish(self.msg)
-                    self.rate.sleep()
+                self.msg.left = int(base_speed + balance)
+                self.msg.right = int(base_speed - balance)
+                self.pub.publish(self.msg)
+                self.rate.sleep()
 
-                    # Preempt signal
-                    if self.server.is_preempt_requested():
-                        rospy.loginfo('%s: Preempted' % self.action_name)
-                        self.server.set_preempted()
-                        success = False
-                        break
-                except AttributeError:
-                    continue
+                # Preempt signal
+                if self.server.is_preempt_requested():
+                    rospy.loginfo('%s: Preempted' % self.action_name)
+                    self.server.set_preempted()
+                    success = False
+                    break
+            except AttributeError:
+                continue
 
         # Stop the robot
         self.msg.left = 0

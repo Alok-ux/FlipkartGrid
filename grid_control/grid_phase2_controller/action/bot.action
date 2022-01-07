@@ -1,8 +1,11 @@
 #goal definition
-grid_phase2_controller/Goal[] order
+int x
+int y
 ---
 #result definition
-camera_driver/GridPose pose
+int x
+int y
 ---
 #feedback
-camera_driver/GridPose pose
+int x
+int y
