@@ -7,8 +7,17 @@ import re
 import math
 from std_msgs.msg import Int32MultiArray,String
 from geometry_msgs.msg import Twist
+<<<<<<< HEAD:grid_utils/apriltag_detector/scripts/node2.py
 from dynamic_reconfigure.server import Server
 from dynamic_tutorials.cfg import TutorialsConfig
+=======
+from cv_bridge import CvBridge, CvBridgeError
+import cv2 as cv
+from apriltag_detector.cfg import LineParamConfig
+from dynamic_reconfigure.server import server
+
+
+>>>>>>> 472dda3e382b11a29f66b0725950406004baad4b:apriltag_detector/scripts/node2.py
 
 list1 = [[542,87],[542,602],[85,602]]
 list2 = [[604,87],[604,666],[85,666]]

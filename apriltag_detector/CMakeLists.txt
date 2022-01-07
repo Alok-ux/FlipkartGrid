@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(apriltag_detector)
+
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  rospy
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  cv_bridge
+  dynamic_reconfigure
+)
+
+generate_dynamic_reconfigure_options(
+  cfg/LineParam.cfg
+)
+catkin_package(
+  DEPENDS
+)
+
+
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
+
+
+catkin_install_python(PROGRAMS  scripts/node1.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+catkin_install_python(PROGRAMS  scripts/node2.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
