@@ -14,13 +14,13 @@ from std_msgs.msg import Float32
 class Motion():
     def __init__(self, id):
         rospy.init_node("bot_motion")
-        self.lis = [(576.9, 332.51), (348.95, 332.90),
-                    (347.06, 182.24), (158.83, 181.98), (161.11, 145.02), (570.94, 146.38)]
+        self.lis = [(219.48, 458.35), (218.96, 298.50),
+                    (218.42, 138.99), (13.40, 136.22), (218.42, 138.99), (218.96, 298.50), (219.48, 458.35)]
         self.id = id
         self.pose = 0
-        self.kp, self.ki, self.kd = 1, 0.0, 0.1
+        self.kp, self.ki, self.kd = 1.0, 0.0, 0.1
         self.intg, self.max_intg, self.lastError = 0.0, 1.0, 0.0
-        self.base_speed = 110
+        self.base_speed = 95
         self.i = 1
         self.image = None
         self.msg = PwmCombined()
@@ -40,18 +40,22 @@ class Motion():
         self.move()
 
     def move(self):
-        print("Entering move")
         if len(self.pose):
             # print("enterig move")
             # x1, x2, y1, y2 = self.pose[0].x, 379.52, self.pose[0].y, 43.52
 
             x2, y2 = self.lis[self.i]
             x1, y1 = self.pose[0].x, self.pose[0].y
+            cv2.arrowedLine(self.image, (int(x1), int(y1)),
+                            (int(x2), int(y2)), (0, 0, 255), 2)
+
+            cv2.imshow('image', self.image)
+            cv2.waitKey(1)
             self.target_angle = math.degrees(math.atan2(y2-y1, x2-x1))
             self.robot_angle = math.degrees(self.pose[0].theta)
             dist = ((x2-x1)**2+(y2-y1)**2)**0.5
 
-            if dist <= 10 and self.i < 5:
+            if dist <= 20 and self.i < 6:
                 self.msg.left = 0
                 self.msg.right = 0
                 self.pub.publish(self.msg)
@@ -61,7 +65,7 @@ class Motion():
                 error = self.target_angle - self.robot_angle
                 self.orient(error)
 
-            elif dist <= 10 and self.i >= 5:
+            elif dist <= 20 and self.i >= 6:
                 self.msg.left = 0
                 self.msg.right = 0
                 self.pub.publish(self.msg)
@@ -72,6 +76,8 @@ class Motion():
                     error -= 360
                 if error < -180:
                     error += 360
+
+                print(error)
                 balance = self.pid(error)
                 self.msg.left = int(self.base_speed + balance)
                 self.msg.right = int(self.base_speed - balance)
@@ -114,6 +120,11 @@ class Motion():
         print("Orient")
         if error > 20 or error < -20:
             balance = self.pid(error)
+            if balance > -90 or balance < 90:
+                if balance < 0:
+                    balance = -90
+                elif balance > 0:
+                    balance = 90
             self.msg.left = int(balance)
             self.msg.right = int(-balance)
             print(self.msg)

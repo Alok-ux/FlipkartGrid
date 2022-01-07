@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # import sys
 import math
@@ -46,8 +46,9 @@ class PoseCamDriver:
 
                 self.i = int(math.floor(xc/34))
                 self.j = int(math.floor(yc/34))
-                msg = GridPose(id=result.tag_id,i = self.i,j = self.j, x=xc, y=yc)
-                msg.theta = math.atan2((yc-ym), (xc-xm))
+                msg = GridPose(id=result.tag_id, i=self.i,
+                               j=self.j, x=xc, y=yc)
+                msg.theta = math.atan2((ym-yc), (xm-xc))
 
                 # TODO: map pixel to real world coordinates (sanjeet)
 
