@@ -57,7 +57,7 @@ class BotClient:
                 if i == 0:
                     continue
                 induct_list[int(row[1]) - 1].append([row[0],row[-1]])
-        self.status1 = 0
+        self.status1 = 0 #initial
         self.status2 = 0
         self.status3 = 0
         self.status4 = 0
@@ -94,23 +94,29 @@ class BotClient:
 
     def callback_active_1(self):
         print("The bot1 is moving in the destined path")
+        self.status1 = 1
     
     def callback_active_2(self):
         print("The bot2 is moving in destined path")
+        self.status2 = 1
+
 
     def callback_active_3(self):
         print("The bot3 is moving in the destined path")
+        self.status3 = 1
+
 
     def callback_active_4(self):
         print("The bot4 is moving in the destined path") 
+        self.status4 = 1
 
 
 
     def callback_feedback_1(self, feedback1):
-        if ((self.status1 !=1 and self.status1 !=2) and (self.status1 !=3)):
+        if  self.status1 !=2:
             self.current_pose_1 = feedback1
 
-        if self.status1 == 3:
+        if feedback1 == [0,4]:
             self.param = {'agent': [{'start': [0,4], 'goal': [12,12], 'name': 'agent1'}], 'map': self.map}#here goal should be next destination and start is the induct station
             solution= solve(self.param)
             print("param: {} \nsolution: {}".format(self.param, solution))
@@ -124,10 +130,10 @@ class BotClient:
        
 
     def callback_feedback_2(self, feedback2):
-        if ((self.status2 !=1 and self.status2 !=2) and (self.status2 !=3)):
+        if self.status2 !=2:
             self.current_pose_2 = feedback2
 
-        if self.status2 == 3:
+        if feedback2 == [0,9]:
             self.param = {'agent': [{'start': [0,9], 'goal': [8,12], 'name': 'agent2'}], 'map': self.map}#here goal should be next destination and start is the induct station
             solution= solve(self.param)
             print("param: {} \nsolution: {}".format(self.param, solution))
@@ -140,10 +146,10 @@ class BotClient:
 
 
     def callback_feedback_3(self, feedback3):
-        if ((self.status3 !=1 and self.status3 !=2) and (self.status3 !=3)):
+        if self.status3 !=2 :
             self.current_pose_3 = feedback3
 
-        if self.status3 == 3:
+        if feedback3 == [0,4]:
             self.param = {'agent': [{'start': [0,4], 'goal': [4,12], 'name': 'agent3'}], 'map': self.map}#here goal should be next destination and start is the induct station
             solution= solve(self.param)
             print("param: {} \nsolution: {}".format(self.param, solution))
@@ -156,10 +162,10 @@ class BotClient:
 
 
     def callback_feedback_4(self, feedback4):
-        if ((self.status4 !=1 and self.status4 !=2) and (self.status4 !=3)):
+        if self.status4 !=2 :
             self.current_pose_4 = feedback4
 
-        if self.status4 == 3:
+        if feedback4 == [0,9]:
             self.param = {'agent': [{'start': [0,9], 'goal': [4,4], 'name': 'agent4'}], 'map': self.map}#here goal should be next destination and start is the induct station
             solution= solve(self.param)
             print("param: {} \nsolution: {}".format(self.param, solution))

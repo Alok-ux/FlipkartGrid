@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-
+import rospy
 import csv
 import yaml
 import rospkg
@@ -12,6 +12,8 @@ from cbs import solve
 class InductStation:
     def __init__(self, id):
         self.id = id
+        #print(self.id)
+        #exit(0)
         rospack = rospkg.RosPack()
         path = rospack.get_path('grid_phase2_controller') + "/data/Sample Data - Sheet1.csv"
         self.induct_list = []
