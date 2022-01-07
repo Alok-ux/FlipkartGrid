@@ -9,12 +9,15 @@ from grid_transmitter.msg import PwmCombined
 
 class Transmitter:
     def __init__(self, args):
-        rospy.init_node('transmitter_{}'.format(args.namespace))
-        rospy.Subscriber('{}_{}'.format(
-            args.topic, args.namespace), PwmCombined, self.callback)
+        rospy.init_node('grid_transmitter_{}'.format(args.namespace))
+        if args.topic:
+            rospy.Subscriber(args.topic, PwmCombined, self.callback)
+        else:
+            rospy.Subscriber('grid_robot_{}/pwm'.format(args.namespace),
+                             PwmCombined, self.callback)
         self.telnet_flag = args.telnet
 
-        default_ip = ['192.168.0.106', '192.168.0.108',
+        default_ip = ['192.168.0.106', '192.168.0.111',
                       '192.168.0.110', '192.168.0.111']
         ip = args.ip if args.ip != '' else default_ip[args.namespace-1]
 
@@ -48,8 +51,8 @@ if __name__ == '__main__':
                         help='robot namespace, default: 0')
     parser.add_argument('--ip', type=str, default='',
                         help='robot ip address, default: ""')
-    parser.add_argument('--topic', type=str, default='/grid_robot/pwm',
-                        help='pwm ros topic, default: /grid_robot/pwm')
+    parser.add_argument('--topic', type=str, default='',
+                        help='pwm ros topic, default: ""')
     parser.add_argument('--port', type=int, default=8888,
                         help='port, default: 8888')
     parser.add_argument('--telnet', action='store_true',
