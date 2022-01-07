@@ -14,11 +14,11 @@ from std_msgs.msg import Float32
 class Motion():
     def __init__(self, id):
         rospy.init_node("bot_motion")
-        self.lis = [(219.48, 458.35), (218.96, 298.50),
-                    (218.42, 138.99), (13.40, 136.22), (218.42, 138.99), (218.96, 298.50), (219.48, 458.35)]
+        self.lis = [(221, 360), (219, 318), (184, 321), (180, 285),
+                    (141, 284), (100, 283), (101, 286)]
         self.id = id
         self.pose = 0
-        self.kp, self.ki, self.kd = 1.0, 0.0, 0.1
+        self.kp, self.ki, self.kd = 1.0, 0.1, 0.0
         self.intg, self.max_intg, self.lastError = 0.0, 1.0, 0.0
         self.base_speed = 95
         self.i = 1

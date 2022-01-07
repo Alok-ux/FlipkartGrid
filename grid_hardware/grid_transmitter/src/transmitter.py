@@ -14,7 +14,7 @@ class Transmitter:
             args.topic, args.namespace), PwmCombined, self.callback)
         self.telnet_flag = args.telnet
 
-        default_ip = ['192.168.0.107', '192.168.0.108',
+        default_ip = ['192.168.0.107', '192.168.0.106',
                       '192.168.0.110', '192.168.0.111']
         ip = args.ip if args.ip != '' else default_ip[args.namespace-1]
 
