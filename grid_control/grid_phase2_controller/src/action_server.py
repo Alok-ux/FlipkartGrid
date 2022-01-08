@@ -98,18 +98,20 @@ class BotServer:
                 # Orient first if angle is too high
                 # TODO: Write control code
 
-                # if -20 < error < 20:
-                #     base_speed = self.base_speed
-                # else:
-                #     base_speed = 0
-                #     if -100 < balance < 100:
-                #         if balance > 0:
-                #             balance += 50
-                #         else:
-                #             balance -= 50
+                if -20 < error < 20:
+                    base_speed = self.base_speed
+                else:
+                    base_speed = 0
+                    self.orient(error)
 
-                # self.msg.left = int(base_speed + balance)
-                # self.msg.right = int(base_speed - balance)
+                    # if -100 < balance < 100:
+                    #     if balance > 0:
+                    #         balance += 50
+                    #     else:
+                    #         balance -= 50
+
+                self.msg.left = int(base_speed + balance)
+                self.msg.right = int(base_speed - balance)
                 self.pub.publish(self.msg)
                 self.rate.sleep()
 
@@ -155,6 +157,15 @@ class BotServer:
         diff = error - self.lastError
         self.lastError = error
         return self.kp * prop + self.ki * self.intg + self.kd * diff
+
+    def orient(self, error):
+        print("Orient")
+        if error > 20 or error < -20:
+            balance = self.pid(error)
+            self.msg.left = int(balance)
+            self.msg.right = int(-balance)
+            print(self.msg)
+            self.pub.publish(self.msg)
 
 
 if __name__ == '__main__':
