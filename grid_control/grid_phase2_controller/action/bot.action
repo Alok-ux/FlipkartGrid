@@ -1,12 +1,12 @@
 #goal definition
-int x
-int y
-float phi
+int32 x
+int32 y
+float32 phi
 ---
 #result definition
-int x
-int y
+int32 x
+int32 y
 ---
 #feedback
-int x
-int y
+int32 x
+int32 y
