@@ -44,31 +44,32 @@ class BotServer:
         self.intg, self.lastError, self.max_intg = 0.0, 0.0, 0.5
         self.base_speed = 100
         self.thresh_dist = 15
+        self.thresh_angle = 20
+        self.cell_size = 34
 
         # Log server start
         rospy.loginfo(self.action_name + " server initialized")
 
+    # Execute goal callback
     def execute(self, goal):
-        success = True
         sub = rospy.Subscriber('/grid_robot/poses', GridPoseArray,
                                self.callback)
         time.sleep(0.5)
+
+        # Linear PID
         while not rospy.is_shutdown():
             try:
                 # Get current pose & target pose
                 x, y = self.pose.x, self.pose.y
 
-                # TODO: Get target pose from goal
-                tx, ty = goal.x, goal.y
+                # Get target pose from goal
+                tx = int(self.cell_size * goal.x + self.cell_size / 2)
+                ty = int(self.cell_size * goal.y + self.cell_size / 2)
 
                 # Calculate distance & angle
                 target_angle = math.degrees(math.atan2(ty - y, tx - x))
                 robot_angle = math.degrees(self.pose.theta)
                 distance = math.sqrt((tx - x)**2 + (ty - y)**2)
-
-                # Publish feedback
-                self.feedback.x, self.feedback.y = self.pose.x, self.pose.y
-                self.server.publish_feedback(self.feedback)
 
                 # Plot target and robot
                 if self.image is not None:
@@ -95,34 +96,39 @@ class BotServer:
                 if distance < self.thresh_dist:
                     break
 
-                # Orient first if angle is too high
-                # TODO: Write control code
-
-                if -20 < error < 20:
-                    base_speed = self.base_speed
-                else:
-                    base_speed = 0
-                    self.orient(error)
-
-                    # if -100 < balance < 100:
-                    #     if balance > 0:
-                    #         balance += 50
-                    #     else:
-                    #         balance -= 50
-
-                self.msg.left = int(base_speed + balance)
-                self.msg.right = int(base_speed - balance)
+                self.msg.left = int(self.base_speed + balance)
+                self.msg.right = int(self.base_speed - balance)
                 self.pub.publish(self.msg)
                 self.rate.sleep()
-
-                # Preempt signal
-                if self.server.is_preempt_requested():
-                    rospy.loginfo('%s: Preempted' % self.action_name)
-                    self.server.set_preempted()
-                    success = False
-                    break
             except AttributeError:
                 continue
+
+        # Angular PID
+        while not rospy.is_shutdown():
+            robot_angle = math.degrees(self.pose.theta)
+            target_angle = goal.phi                     # already in degrees
+
+            error = target_angle - robot_angle
+            balance = self.pid(error)
+
+            # Yaw angle correction
+            if error > 180:
+                error -= 360
+            if error < -180:
+                error += 360
+
+            if -self.thresh_angle < error < self.thresh_angle:
+                break
+
+            balance = self.pid(error)
+            if balance < 90 and balance > 0:
+                balance = 90
+            if balance > -90 and balance < 0:
+                balance = -90
+
+            self.msg.left = int(balance)
+            self.msg.right = int(-balance)
+            self.pub.publish(self.msg)
 
         # Stop the robot
         self.msg.left = 0
@@ -130,9 +136,8 @@ class BotServer:
         self.pub.publish(self.msg)
 
         # Publish result
-        if success:
-            self.result.x, self.result.y = self.pose.x, self.pose.y
-            self.server.set_succeeded(self.result)
+        self.result.x, self.result.y = self.pose.x, self.pose.y
+        self.server.set_succeeded(self.result)
 
         # Unregister from image feed after goal completion
         sub.unregister()
@@ -157,15 +162,6 @@ class BotServer:
         diff = error - self.lastError
         self.lastError = error
         return self.kp * prop + self.ki * self.intg + self.kd * diff
-
-    def orient(self, error):
-        print("Orient")
-        if error > 20 or error < -20:
-            balance = self.pid(error)
-            self.msg.left = int(balance)
-            self.msg.right = int(-balance)
-            print(self.msg)
-            self.pub.publish(self.msg)
 
 
 if __name__ == '__main__':

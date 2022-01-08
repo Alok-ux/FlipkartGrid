@@ -1,6 +1,7 @@
 #goal definition
 int x
 int y
+float phi
 ---
 #result definition
 int x
