@@ -40,12 +40,12 @@ class BotServer:
                                    PwmCombined, queue_size=10)
 
         # Initialize PID parameters
-        self.kp, self.ki, self.kd = 1, 0, 0
+        self.kp, self.ki, self.kd = 1, 0, 0.0
         self.intg, self.lastError, self.max_intg = 0.0, 0.0, 0.5
-        self.base_speed = 100
-        self.thresh_dist = 15
-        self.thresh_angle = 30
-        #self.cell_size = 38
+        self.base_speed = 90
+        self.thresh_dist = 10
+        self.thresh_angle = 45
+        # self.cell_size = 38
         self.cell_size = 36
         self.min_pwm = 90
 
@@ -65,7 +65,8 @@ class BotServer:
                 x, y = self.pose.x, self.pose.y
 
                 # Get target pose from goal
-                tx = int(self.cell_size * goal.x + self.cell_size / 2 + 0.5*(12-goal.y))
+                tx = int(self.cell_size * goal.x
+                         + self.cell_size / 2 + 0.5*(12-goal.y))
                 ty = int(self.cell_size * (12-goal.y) + self.cell_size / 2)
 
                 # Calculate distance & angle
@@ -115,6 +116,7 @@ class BotServer:
                 target_angle = goal.phi                    # already in degrees
 
                 error = target_angle - robot_angle
+                print(error)
 
                 # Yaw angle correction
                 if error > 180:
