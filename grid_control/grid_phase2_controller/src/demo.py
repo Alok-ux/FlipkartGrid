@@ -7,16 +7,26 @@ import actionlib
 from grid_phase2_controller.msg import botAction, botGoal
 
 rospy.init_node('pub')
-client = actionlib.SimpleActionClient(
-    'grid_robot_{}'.format(sys.argv[1]), botAction)
-client.wait_for_server()
+client1 = actionlib.SimpleActionClient(
+    'grid_robot_2', botAction)
+client2 = actionlib.SimpleActionClient(
+    'grid_robot_3', botAction)
+client1.wait_for_server()
+client2.wait_for_server()
 # pose_list = [(221, 360), (219, 318), (184, 321), (180, 285),
 #              (141, 284), (100, 283), (101, 286)]
-pose_list = [(3, 8), (3, 6), (1, 6), (1, 4), (3, 4), (3, 2)]
-for i in range(1, len(pose_list)-1):
-    x_i, y_i = pose_list[i][0], pose_list[i][1]
-    x_j, y_j = pose_list[i+1][0], pose_list[i+1][1]
+pose_list1 = [(3, 8), (3, 6), (1, 6), (1, 4), (3, 4), (3, 2)]
+pose_list2 = [(3, 8), (3, 6), (1, 6), (1, 4), (3, 4), (3, 2)]
+for i in range(1, len(pose_list1)-1):
+    x_i, y_i = pose_list1[i][0], pose_list1[i][1]
+    x_j, y_j = pose_list1[i+1][0], pose_list1[i+1][1]
     phi = math.degrees(math.atan2(y_j - y_i, x_j - x_i))
-    goal = botGoal(x=x_i, y=y_i, phi=phi)
-    client.send_goal(goal)
-    print(client.wait_for_result())
+    goal1 = botGoal(x=x_i, y=y_i, phi=phi)
+    x_i, y_i = pose_list2[i][0], pose_list2[i][1]
+    x_j, y_j = pose_list2[i+1][0], pose_list2[i+1][1]
+    phi = math.degrees(math.atan2(y_j - y_i, x_j - x_i))
+    goal2 = botGoal(x=x_i, y=y_i, phi=phi)
+    client1.send_goal(goal1)
+    client1.send_goal(goal2)
+    print(client1.wait_for_result())
+    print(client2.wait_for_result())
