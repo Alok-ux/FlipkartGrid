@@ -102,6 +102,10 @@ class BotServer:
                     self.pub.publish(self.msg)
                     break
 
+                # Publish feedback
+                self.feedback.x, self.feedback.y = self.pose.x, self.pose.y
+                self.server.publish_feedback(self.feedback)
+
                 self.msg.left = int(self.base_speed + balance)
                 self.msg.right = int(self.base_speed - balance)
                 self.pub.publish(self.msg)
@@ -145,6 +149,13 @@ class BotServer:
         self.msg.left = 0
         self.msg.right = 0
         self.pub.publish(self.msg)
+
+        if goal.drop:
+            self.msg.servo = 1
+            self.pub.publish(self.msg)
+            time.sleep(1)
+            self.msg.servo = 0
+            self.pub.publish(self.msg)
 
         # Publish result
         self.result.x, self.result.y = int(self.pose.x), int(self.pose.y)
