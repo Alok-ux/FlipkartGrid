@@ -45,7 +45,8 @@ class BotServer:
         self.base_speed = 100
         self.thresh_dist = 15
         self.thresh_angle = 30
-        self.cell_size = 38
+        #self.cell_size = 38
+        self.cell_size = 36
         self.min_pwm = 90
 
         # Log server start
@@ -64,8 +65,8 @@ class BotServer:
                 x, y = self.pose.x, self.pose.y
 
                 # Get target pose from goal
-                tx = int(self.cell_size * goal.x + self.cell_size / 2)
-                ty = int(self.cell_size * goal.y + self.cell_size / 2)
+                tx = int(self.cell_size * goal.x + self.cell_size / 2 + 0.5*(12-goal.y))
+                ty = int(self.cell_size * (12-goal.y) + self.cell_size / 2)
 
                 # Calculate distance & angle
                 target_angle = math.degrees(math.atan2(ty - y, tx - x))
