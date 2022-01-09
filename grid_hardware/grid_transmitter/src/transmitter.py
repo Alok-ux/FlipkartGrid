@@ -51,8 +51,8 @@ if __name__ == '__main__':
                         help='robot namespace, default: 0')
     parser.add_argument('--ip', type=str, default='',
                         help='robot ip address, default: ""')
-    parser.add_argument('--topic', type=str, default='',
-                        help='pwm ros topic, default: ""')
+    parser.add_argument('--topic', type=str,
+                        help='pwm ros topic, default: None')
     parser.add_argument('--port', type=int, default=8888,
                         help='port, default: 8888')
     parser.add_argument('--telnet', action='store_true',

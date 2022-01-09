@@ -44,8 +44,9 @@ class BotServer:
         self.intg, self.lastError, self.max_intg = 0.0, 0.0, 0.5
         self.base_speed = 100
         self.thresh_dist = 15
-        self.thresh_angle = 20
-        self.cell_size = 34
+        self.thresh_angle = 30
+        self.cell_size = 38
+        self.min_pwm = 90
 
         # Log server start
         rospy.loginfo(self.action_name + " server initialized")
@@ -94,6 +95,9 @@ class BotServer:
 
                 # Goal completion condition
                 if distance < self.thresh_dist:
+                    self.msg.left = 0
+                    self.msg.right = 0
+                    self.pub.publish(self.msg)
                     break
 
                 self.msg.left = int(self.base_speed + balance)
@@ -105,30 +109,34 @@ class BotServer:
 
         # Angular PID
         while not rospy.is_shutdown():
-            robot_angle = math.degrees(self.pose.theta)
-            target_angle = goal.phi                     # already in degrees
+            try:
+                robot_angle = math.degrees(self.pose.theta)
+                target_angle = goal.phi                    # already in degrees
 
-            error = target_angle - robot_angle
-            balance = self.pid(error)
+                error = target_angle - robot_angle
 
-            # Yaw angle correction
-            if error > 180:
-                error -= 360
-            if error < -180:
-                error += 360
+                # Yaw angle correction
+                if error > 180:
+                    error -= 360
+                if error < -180:
+                    error += 360
 
-            if -self.thresh_angle < error < self.thresh_angle:
-                break
+                print(robot_angle, target_angle, error)
+                if -self.thresh_angle < error < self.thresh_angle:
+                    break
 
-            balance = self.pid(error)
-            if balance < 90 and balance > 0:
-                balance = 90
-            if balance > -90 and balance < 0:
-                balance = -90
+                balance = self.pid(error)
+                if balance < self.min_pwm and balance > 0:
+                    balance = self.min_pwm
+                if balance > -self.min_pwm and balance < 0:
+                    balance = -self.min_pwm
 
-            self.msg.left = int(balance)
-            self.msg.right = int(-balance)
-            self.pub.publish(self.msg)
+                self.msg.left = int(balance)
+                self.msg.right = int(-balance)
+                self.pub.publish(self.msg)
+                self.rate.sleep()
+            except AttributeError:
+                continue
 
         # Stop the robot
         self.msg.left = 0
@@ -136,7 +144,7 @@ class BotServer:
         self.pub.publish(self.msg)
 
         # Publish result
-        self.result.x, self.result.y = self.pose.x, self.pose.y
+        self.result.x, self.result.y = int(self.pose.x), int(self.pose.y)
         self.server.set_succeeded(self.result)
 
         # Unregister from image feed after goal completion
