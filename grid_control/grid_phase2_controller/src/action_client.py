@@ -2,6 +2,7 @@
 
 import csv
 import yaml
+import math
 import rospy
 import rospkg
 import actionlib
@@ -26,15 +27,15 @@ class InductStation:
         self.__induct_list = []   # packages available at the induct station
         self.__read_csv(path)     # read package data from csv file
 
-        self.__drop_pose = {'Mumbai': (3, 9),
-                            'Delhi': (7, 9),
-                            'Kolkata': (11, 9),
-                            'Chennai': (3, 5),
-                            'Bengaluru': (7, 5),
-                            'Hyderabad': (11, 5),
-                            'Pune': (3, 1),
-                            'Ahmedabad': (7, 1),
-                            'Jaipur': (11, 1)}      # position of drop location
+        self.__drop_pose = {'Mumbai': [(3, 9), (3, 10)],
+                            'Delhi': [(7, 9), (7, 10)],
+                            'Kolkata': [(11, 9), (11, 10)],
+                            'Chennai': [(3, 5), (3, 6)],
+                            'Bengaluru': [(7, 5), (7, 6)],
+                            'Hyderabad': [(11, 5), (11, 6)],
+                            'Pune': [(3, 1), (3, 2)],
+                            'Ahmedabad': [(7, 1), (7, 2)],
+                            'Jaipur': [(11, 1), (11, 2)]}   # position of drop
 
     def __read_csv(self, path: str) -> None:
         '''
@@ -87,14 +88,15 @@ class Robot:
     def __init__(self, id):
         self.client = actionlib.SimpleActionClient(
             'grid_robot_{}'.format(id), botAction)
-        # self.client.wait_for_server()
-        self.goal = list()
+        self.client.wait_for_server()
 
-    def send_goal(self):
-        x, y = self.goal.pop(0)
-        x_next, y_next = self.goal[0]
+    def send_goal(self, goal_i, goal_j=None, phi=0, servo=0):
+        if goal_j:
+            phi = math.degrees(math.atan2(goal_i['y'] - goal_j['y'],
+                                          goal_j['x'] - goal_i['x']))
 
-        bot_goal = botGoal(x=x, y=y, phi=0)
+        bot_goal = botGoal(x=goal_i['x'], y=goal_i['y'], phi=phi, servo=servo)
+        # return 'x: {}, y: {}, phi: {}, servo: {}'.format(goal_i['x'], goal_i['y'], phi, servo)
         self.client.send_goal(bot_goal)
 
 
@@ -102,7 +104,8 @@ class Automata:
     def __init__(self, num_bots, induct_station, data_path, map_path):
         self.induct_station = [InductStation(i+1, induct_station[i], data_path)
                                for i in range(len(induct_station))]
-        self.bots = [Robot(i) for i in range(num_bots)]
+        # i + 1 is to start bot 2 & 3 in place of 0 & 1
+        self.bots = [Robot(i+2) for i in range(num_bots)]
 
         with open(map_path, 'r') as param_file:
             try:
@@ -114,28 +117,45 @@ class Automata:
         self.induct_station[0].pop()
         self.induct_station[1].pop()
         self.param['agents'] = list()
+
+        goal_pose = list()
         for i in range(len(self.bots)):
+            goal_name = self.induct_station[i].pop()
+            goal_pose.append(self.induct_station[i][goal_name])
+
             self.param['agents'].append({'start': self.induct_station[i].pose,
-                                         'goal': self.induct_station[i][self.induct_station[i].pop()],
+                                         'goal': goal_pose[i][0],
                                          'name': 'agent'+str(i)
                                          })
-        print(self.param)
+        print('param', self.param)
+        print('goal_pose', goal_pose)
         solution, _ = solve(self.param)
-        print(solution)
+        print('solution', solution)
 
-        # TODO: Send goal to server
-        for i, bot in enumerate(self.bots):
-            bot.goal = [(d['x'], d['y']) for d in solution['agent'+str(i)]]
+        # Find min len array
+        sol_len = []
+        for i, agent in enumerate(solution):
+            x, y = goal_pose[i][1][0], goal_pose[i][1][1]
+            solution[agent].append({'t': len(solution[agent]), 'x': x, 'y': y})
+            sol_len.append(len(solution[agent]))
 
-        while not rospy.is_shutdown():
-            try:
-                for bot in self.bots:
-                    bot.send_goal()
-                for bot in self.bots:
-                    bot.wait_for_result()
-                pass
-            except IndexError:
-                break
+        print('modified solution', solution)
+        min_len = min(sol_len)
+        print('min_len', min_len, 'sol_len', sol_len)
+
+        for i in range(min_len-1):
+            for id, bot in enumerate(self.bots):
+                servo = 0
+                if i == min_len-2 and id == sol_len.index(min_len):
+                    servo = 1
+
+                bot_goal = bot.send_goal(solution['agent'+str(id)][i],
+                                         solution['agent'+str(id)][i+1],
+                                         servo=servo)
+                print('i: {}, id: {}, '.format(i, id), bot_goal)
+
+            for bot in self.bots:
+                bot.wait_for_result()
 
 
 if __name__ == '__main__':

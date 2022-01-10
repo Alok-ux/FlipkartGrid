@@ -2,7 +2,7 @@
 int32 x
 int32 y
 float32 phi
-bool drop
+int32 servo
 ---
 #result definition
 int32 x
