@@ -5,6 +5,7 @@ import yaml
 import math
 import rospy
 import rospkg
+import argparse
 import actionlib
 
 from grid_phase2_controller.msg import botAction, botGoal
@@ -88,7 +89,8 @@ class Robot:
     def __init__(self, id):
         self.client = actionlib.SimpleActionClient(
             'grid_robot_{}'.format(id), botAction)
-        self.client.wait_for_server()
+        # self.client.wait_for_server()
+        self.induct_to_goal = True
 
     def send_goal(self, goal_i, goal_j=None, phi=0, servo=0):
         if goal_j:
@@ -120,45 +122,81 @@ class Automata:
 
         goal_pose = list()
         for i in range(len(self.bots)):
-            goal_name = self.induct_station[i].pop()
-            goal_pose.append(self.induct_station[i][goal_name])
+            goal_name = self.induct_station[i].pop()                                    # pop city name from csv file
+            goal_pose.append(self.induct_station[i][goal_name])                         # append city position to goal_pose
 
-            self.param['agents'].append({'start': self.induct_station[i].pose,
-                                         'goal': goal_pose[i][0],
-                                         'name': 'agent'+str(i)
+            self.param['agents'].append({'start': self.induct_station[i].pose,          # start position
+                                         'goal': goal_pose[i][0],                       # valid goal position
+                                         'name': 'agent'+str(i)                         # agent id = bot id
                                          })
-        print('param', self.param)
-        print('goal_pose', goal_pose)
-        solution, _ = solve(self.param)
-        print('solution', solution)
 
-        # Find min len array
-        sol_len = []
-        for i, agent in enumerate(solution):
-            x, y = goal_pose[i][1][0], goal_pose[i][1][1]
-            solution[agent].append({'t': len(solution[agent]), 'x': x, 'y': y})
-            sol_len.append(len(solution[agent]))
+        iterations = 0
+        while not rospy.is_shutdown():
+            iterations += 1
+            ## CBS Path Planning 
+            print('\nparam: ', self.param['agents'])
+            solution, _ = solve(self.param)
 
-        print('modified solution', solution)
-        min_len = min(sol_len)
-        print('min_len', min_len, 'sol_len', sol_len)
 
-        for i in range(min_len-1):
+            ## Add dummy pose
+            sol_len = []
+            for i, agent in enumerate(solution):
+                x, y = goal_pose[i][1][0], goal_pose[i][1][1]                           # dummy goal position (for phi calc)
+                solution[agent].append({'t': len(solution[agent]), 'x': x, 'y': y})     # append dummy goal to solution list
+                sol_len.append(len(solution[agent]))                                    # append len of soln list to sol_len list
+
+            print('\nsolution: ', solution)
+            min_len = min(sol_len)                                                      # find solution list with min length
+            print('\nmin_len: ', min_len, '\tsol_len: ', sol_len)
+
+            print('\nPath follow: \n')
+
+            ## Send Goals
+            for i in range(min_len-1):
+                for id, bot in enumerate(self.bots):
+                    servo = 0
+                    if i == min_len-2 and id == sol_len.index(min_len):                 # if it is last iteration (i == min_len-2)
+                        servo = 1 if bot.induct_to_goal else 0                          # & id == bot_id (which completed the goal)
+                        bot.induct_to_goal = not bot.induct_to_goal                     # toggle induct_to_goal
+
+                    bot.send_goal(solution['agent'+str(id)][i],
+                                  solution['agent'+str(id)][i+1],
+                                  servo=servo)
+                    print('i: {}, id: {}, pos: {}'.format(i, id, tuple(solution['agent'+str(id)][i].values())[1:]))
+
+                print("")
+                
+                # for bot in self.bots:
+                #     bot.wait_for_result()
+                
+            ## Get New Goals
+            current_index = i
             for id, bot in enumerate(self.bots):
-                servo = 0
-                if i == min_len-2 and id == sol_len.index(min_len):
-                    servo = 1
+                self.param['agents'][id]['start'] = tuple(solution['agent'+str(id)][current_index].values())[1:]
+                if id == sol_len.index(min_len):
+                    if bot.induct_to_goal:
+                        goal_name = self.induct_station[id].pop()                               
+                        goal_pose[id] = self.induct_station[id][goal_name]
+                        self.param['agents'][id]['goal'] = goal_pose[id][0]     
+                    else:
+                        self.param['agents'][id]['goal'] = self.induct_station[id].pose                     
+                else:
+                    self.param['agents'][id]['goal'] = tuple(solution['agent'+str(id)][-2].values())[1:]
 
-                bot_goal = bot.send_goal(solution['agent'+str(id)][i],
-                                         solution['agent'+str(id)][i+1],
-                                         servo=servo)
-                print('i: {}, id: {}, '.format(i, id), bot_goal)
-
-            for bot in self.bots:
-                bot.wait_for_result()
-
+            print('params: ', self.param['agents'])
+            
+            if iterations == 3:
+                break
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--num_pkg', type=int, default=-1, help='iterate for num packages, default: -1, for all')
+    parser.add_argument('-b', '--bots', type=int, default=2, help='number of robots, default: 2')
+    parser.add_argument('-i', '--induct_stations', type=int, default=2, help='number of induct stations, default: 2')
+    parser.add_argument('-m', '--map', type=str, default='/data/input.yaml', help='path to yaml file, default: relative path to map file')
+    parser.add_argument('-d', '--data', type=str, default='/data/Sample Data - Sheet1.csv', help='path to data file, default: relative path to data file')
+    args = parser.parse_args()
+
     try:
         rospy.init_node('automata')
         rospack = rospkg.RosPack()
