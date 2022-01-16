@@ -10,7 +10,7 @@ import actionlib
 
 from grid_phase2_controller.msg import botAction, botGoal
 from cbs import solve
-
+from visualizer import Visualizer
 
 class InductStation:
     def __init__(self, id: int, pose: tuple, path: str) -> None:
@@ -28,15 +28,15 @@ class InductStation:
         self.__induct_list = []   # packages available at the induct station
         self.__read_csv(path)     # read package data from csv file
 
-        self.__drop_pose = {'Mumbai': [(3, 9), (3, 10)],
-                            'Delhi': [(7, 9), (7, 10)],
-                            'Kolkata': [(11, 9), (11, 10)],
-                            'Chennai': [(3, 5), (3, 6)],
-                            'Bengaluru': [(7, 5), (7, 6)],
-                            'Hyderabad': [(11, 5), (11, 6)],
-                            'Pune': [(3, 1), (3, 2)],
-                            'Ahmedabad': [(7, 1), (7, 2)],
-                            'Jaipur': [(11, 1), (11, 2)]}   # position of drop
+        self.__drop_pose = {'Mumbai': [3, 9],
+                            'Delhi': [7, 9],
+                            'Kolkata': [11, 9],
+                            'Chennai': [3, 5],
+                            'Bengaluru': [7, 5],
+                            'Hyderabad': [11, 5],
+                            'Pune': [3, 1],
+                            'Ahmedabad': [7, 1],
+                            'Jaipur': [11, 1]}   # position of drop
 
     def __read_csv(self, path: str) -> None:
         '''
@@ -74,7 +74,12 @@ class InductStation:
         params: key (str): drop location name
         return: list (list): drop location position
         '''
-        return self.__drop_pose[key]
+        pose = self.__drop_pose[key]
+        dirn = [pose[0], pose[1]+1]
+        if self.id % 2 == 0:
+            pose[1] += 3
+            dirn[1] += 1
+        return [pose, dirn]
 
     def pop(self) -> int:
         '''
@@ -86,10 +91,11 @@ class InductStation:
 
 
 class Robot:
-    def __init__(self, id):
+    def __init__(self, id, debug=False):
         self.client = actionlib.SimpleActionClient(
             'grid_robot_{}'.format(id), botAction)
-        # self.client.wait_for_server()
+        if not debug:
+            self.client.wait_for_server()
         self.induct_to_goal = True
 
     def send_goal(self, goal_i, goal_j=None, phi=0, servo=0):
@@ -103,21 +109,20 @@ class Robot:
 
 
 class Automata:
-    def __init__(self, num_bots, induct_station, data_path, map_path):
-        self.induct_station = [InductStation(i+1, induct_station[i], data_path)
+    def __init__(self, num_bots, induct_station, csv_path, yaml_path, debug=False):
+        self.induct_station = [InductStation(i+1, induct_station[i], csv_path)
                                for i in range(len(induct_station))]
-        # i + 1 is to start bot 2 & 3 in place of 0 & 1
-        self.bots = [Robot(i+2) for i in range(num_bots)]
+        self.bots = [Robot(i+2, debug) for i in range(num_bots)]
+        self.viz = Visualizer()
+        self.debug = debug
 
-        with open(map_path, 'r') as param_file:
+        with open(yaml_path, 'r') as param_file:
             try:
                 self.param = yaml.load(param_file, Loader=yaml.FullLoader)
             except yaml.YAMLError as exc:
                 print(exc)
 
     def execute(self, num_pkg=-1):
-        self.induct_station[0].pop()
-        self.induct_station[1].pop()
         self.param['agents'] = list()
 
         goal_pose = list()
@@ -163,11 +168,13 @@ class Automata:
                                   solution['agent'+str(id)][i+1],
                                   servo=servo)
                     print('i: {}, id: {}, pos: {}'.format(i, id, tuple(solution['agent'+str(id)][i].values())[1:]))
-
+                    self.viz.show(solution['agent'+str(id)][i], solution['agent'+str(id)][i+1], id)
+                    self.viz.legend(['IS1: {}'.format(len(self.induct_station[0])), 'IS2: {}'.format(len(self.induct_station[1]))])
                 print("")
-                
-                # for bot in self.bots:
-                #     bot.wait_for_result()
+
+                if not self.debug:
+                    for bot in self.bots:
+                        bot.client.wait_for_result()
                 
             ## Get New Goals
             current_index = i
@@ -177,33 +184,42 @@ class Automata:
                     if bot.induct_to_goal:
                         goal_name = self.induct_station[id].pop()                               
                         goal_pose[id] = self.induct_station[id][goal_name]
-                        self.param['agents'][id]['goal'] = goal_pose[id][0]     
                     else:
-                        self.param['agents'][id]['goal'] = self.induct_station[id].pose                     
+                        # goal_pose[id] = [list(self.induct_station[id].pose)] * 2
+                        # goal_pose[id][1][1] += 1              
+                        goal_pose[id][0] = self.induct_station[id].pose
+                        goal_pose[id][1] = [self.induct_station[id].pose[0], self.induct_station[id].pose[1]]
+                    self.param['agents'][id]['goal'] = goal_pose[id][0]
                 else:
                     self.param['agents'][id]['goal'] = tuple(solution['agent'+str(id)][-2].values())[1:]
 
             print('params: ', self.param['agents'])
-            
-            if iterations == 3:
-                break
+            self.viz.flush()
+            if iterations == 50:
+                rospy.signal_shutdown('killed')
+                
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--num_pkg', type=int, default=-1, help='iterate for num packages, default: -1, for all')
     parser.add_argument('-b', '--bots', type=int, default=2, help='number of robots, default: 2')
     parser.add_argument('-i', '--induct_stations', type=int, default=2, help='number of induct stations, default: 2')
-    parser.add_argument('-m', '--map', type=str, default='/data/input.yaml', help='path to yaml file, default: relative path to map file')
-    parser.add_argument('-d', '--data', type=str, default='/data/Sample Data - Sheet1.csv', help='path to data file, default: relative path to data file')
+    parser.add_argument('-c', '--csv', type=str, help='path to csv file, default: None')
+    parser.add_argument('-y', '--yaml', type=str, help='path to yaml file, default: None')
+    parser.add_argument('-d', '--debug', action='store_true', help='run action client in dubugging mode, do not wait for server')
+
     args = parser.parse_args()
 
     try:
         rospy.init_node('automata')
         rospack = rospkg.RosPack()
         path = rospack.get_path('grid_phase2_controller') + "/data/"
+
+        csv_path = args.csv if args.csv else path + "Sample Data - Sheet1.csv" 
+        yaml_path = args.yaml if args.yaml else path + "input.yaml"
+        
         induct_station_pose = [(0, 4), (0, 9)]
-        automata = Automata(2, induct_station_pose,
-                            path+"Sample Data - Sheet1.csv", path+"input.yaml")
+        automata = Automata(2, induct_station_pose, csv_path, yaml_path, args.debug)
         automata.execute()
         if not rospy.is_shutdown():
             rospy.spin()
