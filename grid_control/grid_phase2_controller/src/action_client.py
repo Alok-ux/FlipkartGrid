@@ -12,6 +12,7 @@ from grid_phase2_controller.msg import botAction, botGoal
 from cbs import solve
 from visualizer import Visualizer
 
+
 class InductStation:
     def __init__(self, id: int, pose: tuple, path: str) -> None:
         '''
@@ -28,15 +29,15 @@ class InductStation:
         self.__induct_list = []   # packages available at the induct station
         self.__read_csv(path)     # read package data from csv file
 
-        self.__drop_pose = {'Mumbai': [3, 9],
-                            'Delhi': [7, 9],
-                            'Kolkata': [11, 9],
-                            'Chennai': [3, 5],
-                            'Bengaluru': [7, 5],
-                            'Hyderabad': [11, 5],
-                            'Pune': [3, 1],
-                            'Ahmedabad': [7, 1],
-                            'Jaipur': [11, 1]}   # position of drop
+        self.__drop_pose = {'Mumbai': (3, 9),
+                            'Delhi': (7, 9),
+                            'Kolkata': (11, 9),
+                            'Chennai': (3, 5),
+                            'Bengaluru': (7, 5),
+                            'Hyderabad': (11, 5),
+                            'Pune': (3, 1),
+                            'Ahmedabad': (7, 1),
+                            'Jaipur': (11, 1)}   # position of drop
 
     def __read_csv(self, path: str) -> None:
         '''
@@ -74,7 +75,7 @@ class InductStation:
         params: key (str): drop location name
         return: list (list): drop location position
         '''
-        pose = self.__drop_pose[key]
+        pose = [self.__drop_pose[key][0], self.__drop_pose[key][1]]
         dirn = [pose[0], pose[1]+1]
         if self.id % 2 == 0:
             pose[1] += 3
@@ -112,7 +113,7 @@ class Automata:
     def __init__(self, num_bots, induct_station, csv_path, yaml_path, debug=False):
         self.induct_station = [InductStation(i+1, induct_station[i], csv_path)
                                for i in range(len(induct_station))]
-        self.bots = [Robot(i+2, debug) for i in range(num_bots)]
+        self.bots = [Robot(i, debug) for i in range(num_bots)]
         self.viz = Visualizer()
         self.debug = debug
 
@@ -193,9 +194,8 @@ class Automata:
                 else:
                     self.param['agents'][id]['goal'] = tuple(solution['agent'+str(id)][-2].values())[1:]
 
-            print('params: ', self.param['agents'])
             self.viz.flush()
-            if iterations == 50:
+            if iterations == 500:
                 rospy.signal_shutdown('killed')
                 
 
