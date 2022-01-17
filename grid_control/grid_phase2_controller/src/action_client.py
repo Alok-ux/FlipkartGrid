@@ -92,7 +92,7 @@ class InductStation:
         self.__is_occupied = False
         return self.__induct_list.pop(0)
 
-    def get_pose(self):
+    def get_pose(self, set_occupied=True):
         '''
         This function returns pose of the induct station
         params: None
@@ -105,7 +105,7 @@ class InductStation:
             standby = True
             return (x + 4, y), (x + 3, y), standby
 
-        self.__is_occupied = True
+        self.__is_occupied = set_occupied
         return (x, y), (x + 1, y), standby
 
 
@@ -165,7 +165,7 @@ class Automata:
                     continue
                 station = self.induct_station[id % len_stns]
                 self.bots[id].goal_station = station
-                x, y = self.bots[id].curr_pose = station.get_pose()[0]
+                x, y = self.bots[id].curr_pose = station.get_pose(set_occupied=False)[0]
 
                 self.param['agents'].append({'start': self.bots[id].curr_pose,
                                              'goal': [x + 2 * (num_iter - 1 - i), y],
