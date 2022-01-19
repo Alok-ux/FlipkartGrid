@@ -18,9 +18,13 @@ generate_messages(
   std_msgs
 )
 
+generate_dynamic_reconfigure_options(
+  cfg/pid.cfg
+)
+
 catkin_package(
-    DEPENDS
-    actionlib_msgs
+  DEPENDS
+  actionlib_msgs
 )
 
 include_directories(
