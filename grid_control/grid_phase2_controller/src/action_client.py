@@ -86,7 +86,7 @@ class InductStation:
         '''
         pose = [self.__drop_pose[key][0], self.__drop_pose[key][1]]
         dirn = [pose[0], pose[1]+1]
-        if self.id % 2 == 0:
+        if self.id % 2 == 1:
             pose[1] += 3
             dirn[1] += 1
         return [pose, dirn]
@@ -163,7 +163,7 @@ class Automata:
     def __init__(self, num_bots, stations, csv_path, yaml_path, debug=False):
         self.stations = [InductStation(i+1, stations[i], csv_path)
                             for i in range(len(stations))]
-        self.bots = {i: Robot(i, debug, self.stations[i % len(self.stations)]) 
+        self.bots = {i: Robot(i+1, debug, self.stations[i % len(self.stations)]) 
                         for i in range(num_bots)}
         self.viz = Visualizer()
         self.total_pkg = sum([len(i) for i in self.stations])
@@ -233,7 +233,7 @@ class Automata:
 
                 self.param['agents'].append({'start': bot.curr_pose,
                                              'goal': bot.goal_pose,
-                                             'name': bot.id})
+                                             'name': bot.id-1})
 
                 print(bot)
 
@@ -304,7 +304,7 @@ if __name__ == '__main__':
         csv_path = args.csv if args.csv else path + "Sample Data - Sheet1.csv" 
         yaml_path = args.yaml if args.yaml else path + "input.yaml"
         
-        stations_pose = [(0, 4), (0, 9)]
+        stations_pose = [(0, 9), (0, 4)]
         automata = Automata(args.bots, stations_pose, csv_path, yaml_path, args.debug)
         automata.automata(args.num_pkg)
         
