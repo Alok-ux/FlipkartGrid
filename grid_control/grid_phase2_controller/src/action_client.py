@@ -70,6 +70,14 @@ class InductStation:
         '''
         return iter(self.__induct_list)
 
+    def __repr__(self) -> str:
+        '''
+        This function returns the string representation of the object
+        params: None
+        return: (str): string representation of the object
+        '''
+        return "InductStation({}, {}): IsOccupied: {}".format(self.id, self.__pose, self.__is_occupied)
+
     def __getitem__(self, key: str) -> list:
         '''
         This funtion is called when obj[key] is executed
@@ -89,36 +97,49 @@ class InductStation:
         params: None
         return: (int): poped entry from the beginning
         '''
-        self.__is_occupied = False
         return self.__induct_list.pop(0)
 
-    def get_pose(self, set_occupied=True):
+    def set_occupied(self, occupied: bool) -> None:
+        '''
+        This function sets the occupied flag of the induct station
+        params: occupied (bool): value to set the flag
+        return: None
+        '''
+        self.__is_occupied = occupied
+
+    def is_occupied(self) -> bool:
+        '''
+        This function returns the occupied flag of the induct station
+        params: None
+        return: (bool): occupied flag
+        '''
+        return self.__is_occupied
+
+    def get_pose(self) -> tuple:
         '''
         This function returns pose of the induct station
         params: None
         return: (tuple): pose and dummy pose for direction
         '''
         x, y = self.__pose
-        standby = False
 
         if self.__is_occupied:
-            standby = True
-            return (x + 4, y), (x + 3, y), standby
+            return (x + 4, y), (x + 3, y)
 
-        self.__is_occupied = set_occupied
-        return (x, y), (x + 1, y), standby
+        return (x, y), (x + 1, y)
 
 
 class Robot:
-    def __init__(self, id, debug=False):
-        self.client = actionlib.SimpleActionClient(
-            'grid_robot_{}'.format(id), botAction)
-        if not debug:
+    def __init__(self, id, goal_station, debug=False):
+        self.id = id
+        self.client = actionlib.SimpleActionClient('grid_robot_{}'.format(id), botAction)
+        self.debug = debug
+        self.goal_station = goal_station
+        self.state = 'picking'
+        self.curr_pose, self.goal_pose, self.goal_dirn = None, None, None
+
+        if not self.debug:
             self.client.wait_for_server()
-        self.induct_to_goal = True
-        self.standby = True
-        self.goal_station = None
-        self.curr_pose = None
 
     def send_goal(self, goal_i, goal_j=None, phi=0, servo=0):
         if goal_j:
@@ -126,19 +147,26 @@ class Robot:
                                           goal_j['x'] - goal_i['x']))
 
         bot_goal = botGoal(x=goal_i['x'], y=goal_i['y'], phi=phi, servo=servo)
-        self.client.send_goal(bot_goal)
+        if not self.debug:
+            self.client.send_goal(bot_goal)
+
+    def wait_for_result(self):
+        if not self.debug:
+            self.client.wait_for_result()
+
+    def __repr__(self):
+        return "Robot {}: state: {}, curr_pose: {}, goal_pose: {}, goal_dirn: {}".format(
+            self.id, self.state, self.curr_pose, self.goal_pose, self.goal_dirn)
 
 
 class Automata:
-    def __init__(self, num_bots, induct_station, csv_path, yaml_path, debug=False):
-        self.induct_station = [InductStation(i+1, induct_station[i], csv_path)
-                               for i in range(len(induct_station))]
-        self.bots = [Robot(i, debug) for i in range(num_bots)]
+    def __init__(self, num_bots, stations, csv_path, yaml_path, debug=False):
+        self.stations = [InductStation(i+1, stations[i], csv_path)
+                            for i in range(len(stations))]
+        self.bots = {i: Robot(i, debug, self.stations[i % len(self.stations)]) 
+                        for i in range(num_bots)}
         self.viz = Visualizer()
-
-        self.debug = debug
-        self.total_pkg = sum([len(i) for i in self.induct_station])
-        self.min_path_idx = None
+        self.total_pkg = sum([len(i) for i in self.stations])
 
         with open(yaml_path, 'r') as param_file:
             try:
@@ -147,119 +175,128 @@ class Automata:
             except yaml.YAMLError as exc:
                 print(exc)
 
-    def get_induct_station(self, id):
+    def get_stations(self, id):
         cost = []
-        for stn in self.induct_station:
+        for stn in self.stations:
             bx, by = self.bots[id].curr_pose
             ix, iy = stn.get_pose()[0]
             cost.append(abs(bx - ix) + abs(by - iy))
-        return self.induct_station[cost.index(min(cost))]
+        return self.stations[cost.index(min(cost))]
 
     def automata(self, num_pkg=None):
-        len_bots, len_stns = len(self.bots), len(self.induct_station)
+        len_bots, len_stns = len(self.bots), len(self.stations)
+
         num_iter = math.ceil(len_bots/len_stns)
         for i in range(num_iter):
-            
             for id in range(i * len_stns, (i + 1) * len_stns, 1):
                 if id >= len_bots:
                     continue
-                station = self.induct_station[id % len_stns]
+                station = self.stations[id % len_stns]
+                x, y = station.get_pose()[0]
+
+                self.bots[id].curr_pose = (x, y)
                 self.bots[id].goal_station = station
-                x, y = self.bots[id].curr_pose = station.get_pose(set_occupied=False)[0]
+                self.bots[id].goal_pose = [x + 2 * (num_iter - 1 - i), y]
+                self.bots[id].goal_dirn = [x + 2 * (num_iter - 1 - i) + 1, y]
 
                 self.param['agents'].append({'start': self.bots[id].curr_pose,
-                                             'goal': [x + 2 * (num_iter - 1 - i), y],
-                                             'dirn': [x + 2 * (num_iter - 1 - i) + 1, y],
-                                             'name': 'agent' + str(id)})
+                                             'goal': self.bots[id].goal_pose,
+                                             'name': id})
                 print('B: {}, S: {}, X: {}, i: {}, id: {}'.format(len_bots, len_stns, num_iter, i, id))
 
-            print(self.param['agents'])
             self.execute()
             self.param['agents'] = []                                       # we are executing for specific bots, so reset param for other bots
 
-        for i, bot in enumerate(self.bots):
-            self.param['agents'].append({'name': 'agent' + str(i)})
-            bot.standby = False
-            bot.goal_station = self.induct_station[i % len_stns]            # comment this to use manhattan dist based station selection
-            
-        self.min_path_idx = range(len_bots)
         self.viz.flush()
         
         while not rospy.is_shutdown():
             ## Count no. of pkgs dropped
-            total_dropped = self.total_pkg - sum([len(i) for i in self.induct_station]) - len(self.induct_station)
+            total_dropped = self.total_pkg - sum([len(i) for i in self.stations]) - len_stns
             if self.total_pkg == total_dropped or num_pkg == total_dropped:
                 rospy.signal_shutdown('killed')
 
             ## Get New Goals
-            for id, bot in enumerate(self.bots):
-                self.param['agents'][id]['start'] = bot.curr_pose
-                if id in self.min_path_idx:
-                    if bot.induct_to_goal:
-                        goal, dirn = bot.goal_station[bot.goal_station.pop()]
+            for bot in self.bots.values():
+                if bot.state == 'dropped':
+                    if not bot.goal_station.is_occupied():
+                        bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()
+                        bot.goal_station.set_occupied(True)
+                        bot.state = 'picking'
                     else:
-                        # bot.goal_station = self.get_induct_station(id)    # uncomment this to use manhattan dist based station selection
-                        goal, dirn, standby = bot.goal_station.get_pose()
-                        bot.standby = standby
-                    self.param['agents'][id]['goal'] = goal
-                    self.param['agents'][id]['dirn'] = dirn
+                        bot.state = 'standingby'
+                        bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()              # get induct station pose
+
+                elif bot.state == 'picked':
+                    bot.goal_pose, bot.goal_dirn = bot.goal_station[bot.goal_station.pop()]     # get new goal from the list
+                    bot.state = 'dropping'
+
+                elif bot.state == 'standby':
+                    if not bot.goal_station.is_occupied():
+                        bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()              # get induct station pose if available
+                        bot.goal_station.set_occupied(True)
+                        bot.state = 'picking'
+                    else:
+                        continue
+
+                self.param['agents'].append({'start': bot.curr_pose,
+                                             'goal': bot.goal_pose,
+                                             'name': bot.id})
+
+                print(bot)
+            for stn in self.stations:
+                print(stn)
 
             self.execute()
-
-            self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.induct_station] + ['Drop: {}'.format(total_dropped)])
+            self.param['agents'].clear()
+            self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.stations] + ['Drop: {}'.format(total_dropped)])
             self.viz.flush()
 
     def execute(self):
         ## CBS Path Planning 
-        print('\nparam: ', self.param['agents'])
+        # print('\nparam: ', self.param['agents'])
         solution, _ = solve(self.param)
 
         ## Add dummy pose
-        path_len = []
-        for i, agent in enumerate(solution):
-            x, y = self.param['agents'][i]['dirn']                                  # dummy goal position (for phi calc)
+        for agent in solution:
+            x, y = self.bots[agent].goal_dirn                                       # dummy goal position (for phi calc)
             solution[agent].append({'t': len(solution[agent]), 'x': x, 'y': y})     # append dummy goal to solution list
-            path_len.append(len(solution[agent]))                                   # append len of solution to path_len list
-
         # print('\nsolution: ', solution)
 
-        min_path = min(path_len)                                                    # find solution list with min path
-        self.min_path_idx = [i for i, l in enumerate(path_len) if l == min_path]    # path len list only with items = min path
-
-        # print('\nmin_path: ', min_path, '\tpath_len: ', path_len, '\tmin_idx: ', min_path_idx)
-        # print('\nPath follow: \n')
-
         ## Send Goals
-        for i in range(min_path-1):
-            for id, bot in enumerate(self.bots):
-                agent_id = 'agent'+str(id)
-                if agent_id not in solution:
-                    continue
+        i, preempted = 0, False
+        while not preempted:
+            for agent in solution:
                 servo = 0
-                if i == min_path-2 and id in self.min_path_idx and not bot.standby: # if it is last iteration (i == min_path-2)
-                    servo = 1 if bot.induct_to_goal else 0                          # & id == bot_id (which completed the goal)
-                    bot.induct_to_goal = not bot.induct_to_goal                     # toggle induct_to_goal
 
-                if not self.debug:
-                    bot.send_goal(solution[agent_id][i],
-                                  solution[agent_id][i+1],
-                                  servo=servo)
-                bot.curr_pose = (solution[agent_id][i]['x'], solution[agent_id][i]['y'])
-                # print('i: {}, id: {}, pos: {}'.format(i, id, tuple(solution['agent'+str(id)][i].values())[1:]))
-                self.viz.show(solution[agent_id][i], solution[agent_id][i+1], id)
-            
-            # print("")
+                if i == len(solution[agent])-2:
+                    preempted = True
+                    if self.bots[agent].state == 'dropping':
+                        servo = 1
+                        self.bots[agent].state = 'dropped'
+                    elif self.bots[agent].state == 'picking':
+                        self.bots[agent].state = 'picked'
+                        self.bots[agent].goal_station.set_occupied(False)
+                    elif self.bots[agent].state == 'standingby':
+                        self.bots[agent].state = 'standby'
 
-            if not self.debug:
-                for bot in self.bots:
-                    bot.client.wait_for_result()
+                self.bots[agent].send_goal(solution[agent][i],
+                                           solution[agent][i+1],
+                                           servo=servo)
+
+                self.bots[agent].curr_pose = (solution[agent][i]['x'], solution[agent][i]['y'])
+                self.viz.show(solution[agent][i], solution[agent][i+1], agent)
+
+            for agent in solution:
+                self.bots[agent].wait_for_result()
+
+            i += 1
                 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--num_pkg', type=int, help='iterate for num packages, default: None, for all')
     parser.add_argument('-b', '--bots', type=int, default=2, help='number of robots, default: 2')
-    # parser.add_argument('-i', '--induct_stations', type=int, default=2, help='number of induct stations, default: 2')
+    # parser.add_argument('-i', '--stationss', type=int, default=2, help='number of induct stations, default: 2')
     parser.add_argument('-c', '--csv', type=str, help='path to csv file, default: None')
     parser.add_argument('-y', '--yaml', type=str, help='path to yaml file, default: None')
     parser.add_argument('-d', '--debug', action='store_true', help='run action client in dubugging mode, do not wait for server')
@@ -274,8 +311,8 @@ if __name__ == '__main__':
         csv_path = args.csv if args.csv else path + "Sample Data - Sheet1.csv" 
         yaml_path = args.yaml if args.yaml else path + "input.yaml"
         
-        induct_station_pose = [(0, 4), (0, 9)]
-        automata = Automata(args.bots, induct_station_pose, csv_path, yaml_path, args.debug)
+        stations_pose = [(0, 4), (0, 9)]
+        automata = Automata(args.bots, stations_pose, csv_path, yaml_path, args.debug)
         automata.automata(args.num_pkg)
         
         if not rospy.is_shutdown():
