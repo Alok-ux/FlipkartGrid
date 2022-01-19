@@ -227,11 +227,14 @@ class BotServer:
                                    PwmCombined, queue_size=10)
 
         # Initialize PID parameters
-        self.kp, self.ki, self.kd = 1, 0, 0.0
+        kp, ki, kd = [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]
+        self.kp, self.ki, self.kd = kp[self.id-1], ki[self.id-1], kd[self.id-1]
         self.intg, self.lastError, self.max_intg = 0.0, 0.0, 0.5
-        self.base_speed = 90
-        self.thresh_dist = 10
-        self.thresh_angle = 45
+        base_speed, thresh_dist, thresh_angle = [
+            90, 90, 90, 90], [15, 15, 15, 15], [45, 45, 45, 45]
+        self.base_speed = base_speed[self.id-1]
+        self.thresh_dist = thresh_dist[self.id-1]
+        self.thresh_angle = thresh_angle[self.id-1]
         # self.cell_size = 38
         self.cell_size = 36
         self.min_pwm = 90
