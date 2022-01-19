@@ -231,7 +231,7 @@ class BotServer:
         self.kp, self.ki, self.kd = kp[self.id-1], ki[self.id-1], kd[self.id-1]
         self.intg, self.lastError, self.max_intg = 0.0, 0.0, 0.5
         base_speed, thresh_dist, thresh_angle = [
-            90, 90, 90, 90], [15, 15, 15, 15], [45, 45, 45, 45]
+            90, 90, 100, 90], [15, 15, 15, 15], [45, 45, 45, 45]
         self.base_speed = base_speed[self.id-1]
         self.thresh_dist = thresh_dist[self.id-1]
         self.thresh_angle = thresh_angle[self.id-1]
@@ -298,8 +298,8 @@ class BotServer:
                     break
 
                 # Publish feedback
-                self.feedback.x, self.feedback.y = self.pose.x, self.pose.y
-                self.server.publish_feedback(self.feedback)
+                # self.feedback.x, self.feedback.y = self.pose.x, self.pose.y
+                # self.server.publish_feedback(self.feedback)
 
                 self.msg.left = int(self.base_speed + balance)
                 self.msg.right = int(self.base_speed - balance)

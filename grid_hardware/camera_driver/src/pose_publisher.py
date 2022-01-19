@@ -35,8 +35,8 @@ class PoseCamDriver:
             # frame = frame[1:479, 41:593]
             #frame = frame[103:452, 113:564]
             #frame = frame[5:480, 40:593]
-            frame = frame[23:473, 43:575]  # DBA A120
-            frame = frame[34:403, 164:531]  # A124
+            # frame = frame[23:473, 43:575]  # DBA A120
+            # frame = frame[34:403, 164:531]  # A124
 
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             results = self.detector.detect(gray)
