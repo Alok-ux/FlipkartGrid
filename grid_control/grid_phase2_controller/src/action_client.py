@@ -167,6 +167,7 @@ class Automata:
                         for i in range(num_bots)}
         self.viz = Visualizer()
         self.total_pkg = sum([len(i) for i in self.stations])
+        self.total_dropped = 0
 
         with open(yaml_path, 'r') as param_file:
             try:
@@ -174,14 +175,6 @@ class Automata:
                 self.param['agents'] = []
             except yaml.YAMLError as exc:
                 print(exc)
-
-    def get_stations(self, id):
-        cost = []
-        for stn in self.stations:
-            bx, by = self.bots[id].curr_pose
-            ix, iy = stn.get_pose()[0]
-            cost.append(abs(bx - ix) + abs(by - iy))
-        return self.stations[cost.index(min(cost))]
 
     def automata(self, num_pkg=None):
         len_bots, len_stns = len(self.bots), len(self.stations)
@@ -211,8 +204,8 @@ class Automata:
         
         while not rospy.is_shutdown():
             ## Count no. of pkgs dropped
-            total_dropped = self.total_pkg - sum([len(i) for i in self.stations]) - len_stns
-            if self.total_pkg == total_dropped or num_pkg == total_dropped:
+            self.total_dropped = self.total_pkg - sum([len(i) for i in self.stations]) - len_stns
+            if self.total_pkg == self.total_dropped or num_pkg == self.total_dropped:
                 rospy.signal_shutdown('killed')
 
             ## Get New Goals
@@ -243,24 +236,24 @@ class Automata:
                                              'name': bot.id})
 
                 print(bot)
+
+            print("")   
             for stn in self.stations:
                 print(stn)
+            print("")
 
             self.execute()
             self.param['agents'].clear()
-            self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.stations] + ['Drop: {}'.format(total_dropped)])
             self.viz.flush()
 
     def execute(self):
         ## CBS Path Planning 
-        # print('\nparam: ', self.param['agents'])
         solution, _ = solve(self.param)
 
         ## Add dummy pose
         for agent in solution:
             x, y = self.bots[agent].goal_dirn                                       # dummy goal position (for phi calc)
             solution[agent].append({'t': len(solution[agent]), 'x': x, 'y': y})     # append dummy goal to solution list
-        # print('\nsolution: ', solution)
 
         ## Send Goals
         i, preempted = 0, False
@@ -285,6 +278,7 @@ class Automata:
 
                 self.bots[agent].curr_pose = (solution[agent][i]['x'], solution[agent][i]['y'])
                 self.viz.show(solution[agent][i], solution[agent][i+1], agent)
+                self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
 
             for agent in solution:
                 self.bots[agent].wait_for_result()
@@ -296,7 +290,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--num_pkg', type=int, help='iterate for num packages, default: None, for all')
     parser.add_argument('-b', '--bots', type=int, default=2, help='number of robots, default: 2')
-    # parser.add_argument('-i', '--stationss', type=int, default=2, help='number of induct stations, default: 2')
     parser.add_argument('-c', '--csv', type=str, help='path to csv file, default: None')
     parser.add_argument('-y', '--yaml', type=str, help='path to yaml file, default: None')
     parser.add_argument('-d', '--debug', action='store_true', help='run action client in dubugging mode, do not wait for server')
