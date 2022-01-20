@@ -192,9 +192,9 @@ class Automata:
         try:
             self.image = self.cv_bridge.imgmsg_to_cv2(msg.image,
                                                       desired_encoding='bgr8')
-            for id, x, y, theta in msg.poses:
-                pkg_name = self.bots[id-1].current_package
-                cv2.putText(self.image, pkg_name, (x, y),
+            for pose in msg.poses:
+                pkg_name = self.bots[pose.id//2].current_package
+                cv2.putText(self.image, pkg_name, (int(pose.x), int(pose.y)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
                 cv2.imshow('live_feed', self.image)
                 cv2.waitKey(1)
