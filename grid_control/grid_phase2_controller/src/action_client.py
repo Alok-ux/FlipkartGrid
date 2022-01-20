@@ -13,7 +13,7 @@ from grid_phase2_controller.msg import botAction, botGoal
 from camera_driver.msg import GridPoseArray
 from cv_bridge import CvBridge, CvBridgeError
 from cbs import solve
-# from visualizer import Visualizer
+from visualizer import Visualizer
 
 
 class InductStation:
@@ -165,8 +165,8 @@ class Robot:
             self.client.wait_for_result()
 
     def __repr__(self):
-        return "Robot {}: state: {}, curr_pose: {}, goal_pose: {}, goal_dirn: {}".format(
-            self.id, self.state, self.curr_pose, self.goal_pose, self.goal_dirn)
+        return "Robot {}: state: {}, curr_pose: {}, goal_pose: {}, goal_dirn: {}, pkg: {}".format(
+            self.id, self.state, self.curr_pose, self.goal_pose, self.goal_dirn, self.current_package)
 
 
 class Automata:
@@ -175,7 +175,7 @@ class Automata:
                          for i in range(len(stations))]
         self.bots = {i: Robot(i+1+i//2, self.stations[i % len(self.stations)], debug)
                      for i in range(num_bots)}
-        # self.viz = Visualizer()
+        self.viz = Visualizer()
         self.total_pkg = sum([len(i) for i in self.stations])
         self.total_dropped = 0
         self.cv_bridge = CvBridge()
@@ -227,7 +227,7 @@ class Automata:
             # we are executing for specific bots, so reset param for other bots
             self.param['agents'] = []
 
-        # self.viz.flush()
+        self.viz.flush()
 
         while not rospy.is_shutdown():
             ## Count no. of pkgs dropped
@@ -243,7 +243,7 @@ class Automata:
                         bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()
                         bot.goal_station.set_occupied(True)
                         bot.state = 'picking'
-                        print(bot.id, "has dropped", bot.current_package)
+                        # print(bot.id, "has dropped", bot.current_package)
                         bot.current_package = bot.goal_station.pop_pkg()
                     else:
                         bot.state = 'standingby'
@@ -255,7 +255,7 @@ class Automata:
                     bot.goal_pose, bot.goal_dirn = bot.goal_station[bot.goal_station.pop(
                     )]
                     bot.state = 'dropping'
-                    print(bot.id, "is handling", bot.current_package)
+                    # print(bot.id, "is handling", bot.current_package)
 
                 elif bot.state == 'standby':
                     if not bot.goal_station.is_occupied():
@@ -263,7 +263,10 @@ class Automata:
                         bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()
                         bot.goal_station.set_occupied(True)
                         bot.state = 'picking'
+                        if bot.curr_pose in self.param['map']['obstacles']:
+                            self.param['map']['obstacles'].pop(self.param['map']['obstacles'].index(bot.curr_pose))
                     else:
+                        self.param['map']['obstacles'].append(bot.curr_pose)
                         continue
 
                 self.param['agents'].append({'start': bot.curr_pose,
@@ -279,7 +282,7 @@ class Automata:
 
             self.execute()
             self.param['agents'].clear()
-            # self.viz.flush()
+            self.viz.flush()
 
     def execute(self):
         ## CBS Path Planning
@@ -315,9 +318,9 @@ class Automata:
 
                 self.bots[agent].curr_pose = (
                     solution[agent][i]['x'], solution[agent][i]['y'])
-                # self.viz.show(solution[agent][i], solution[agent][i+1], agent)
-                # self.viz.legend(['IS{}: {}'.format(i.id, len(
-                #     i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
+                self.viz.show(solution[agent][i], solution[agent][i+1], agent)
+                self.viz.legend(['IS{}: {}'.format(i.id, len(
+                    i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
 
             for agent in solution:
                 self.bots[agent].wait_for_result()
