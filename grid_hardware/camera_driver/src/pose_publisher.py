@@ -33,10 +33,14 @@ class PoseCamDriver:
             # cap.set(3, 640)
             # cap.set(4, 480)
             # frame = frame[1:479, 41:593]
-            #frame = frame[103:452, 113:564]
-            #frame = frame[5:480, 40:593]
+            # frame = frame[103:452, 113:564]
+            # frame = frame[5:480, 40:593]
             # frame = frame[23:473, 43:575]  # DBA A120
-            # frame = frame[34:403, 164:531]  # A124
+            # frame = frame[160:455, 245:390]  # A124
+
+            # for i in range(1, 5):
+            #     for j in range(1, 9):
+            #         cv.putText(frame, f'{i-1}, {j-1}', (36*i-18, 36*j-18), cv.FONT_HERSHEY_SIMPLEX, 0.25, (0, 0, 255), 1)
 
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             results = self.detector.detect(gray)

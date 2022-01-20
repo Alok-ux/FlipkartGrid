@@ -118,7 +118,7 @@ class BotServer:
                     cv2.arrowedLine(self.image, (int(x), int(y)),
                                     (int(tx), int(ty)), (0, 0, 255), 2)
                     cv2.circle(self.image, (int(tx), int(ty)),
-                               self.params['thresh_dist'], (255, 0, 0), 2)
+                               int(self.params['thresh_dist']), (255, 0, 0), 2)
                     cv2.imshow("grid_robot_{}".format(self.id), self.image)
                     cv2.waitKey(1)
 

@@ -21,15 +21,21 @@ class TestClient:
         self.client.wait_for_server()
 
     def __call__(self, goal_array) -> None:
-        for i in range(len(goal_array)-1):
-            (x_i, y_i), (x_j, y_j) = goal_array[i], goal_array[i+1]
+        if len(goal_array[0]) == 3:
+            for x, y, phi in goal_array:
+                goal = botGoal(x=x, y=y, phi=phi)
+                self.client.send_goal(goal)
+                self.client.wait_for_result()
+                
+        elif len(goal_array[0]) == 2:
+            for i in range(len(goal_array)-1):
+                (x_i, y_i), (x_j, y_j) = goal_array[i], goal_array[i+1]
 
-            phi = math.degrees(math.atan2(y_i - y_j, x_j - x_i))
-            goal = botGoal(x=x_i, y=y_i, phi=phi)
-            self.viz.show((x_i, y_i), (x_j, y_j))
+                phi = math.degrees(math.atan2(y_i - y_j, x_j - x_i))
+                goal = botGoal(x=x_i, y=y_i, phi=phi)
+                self.client.send_goal(goal)
+                self.client.wait_for_result()        
 
-            self.client.send_goal(goal)
-            self.client.wait_for_result()
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test server')
@@ -39,6 +45,6 @@ if __name__ == '__main__':
     try:
         test_client = TestClient('grid_robot_{}'.format(args.server))
         while not rospy.is_shutdown():
-            test_client([(10, 1), (10, 3), (8, 3), (8, 1), (10, 1)])
+            test_client([(1, 1, 90), (1, 4, 0), (2, 4, -90), (2, 1, 180)])
     except rospy.ROSInterruptException:
         pass
