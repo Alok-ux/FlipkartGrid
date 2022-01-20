@@ -48,7 +48,8 @@ class BotServer:
         # Initialize coordinates
         with open(csv_path, 'r') as file:
             reader = csv.reader(file)
-            self.coordinates = {(int(row[0]), int(row[1])): (int(row[2]), int(row[3])) for row in reader}
+            self.coordinates = {(int(row[0]), int(row[1])): (
+                int(row[2]), int(row[3])) for row in reader}
 
         # Initialize pwm publisher
         self.msg = PwmCombined()
@@ -59,7 +60,6 @@ class BotServer:
         self.intg, self.lastError, self.max_intg = 0.0, 0.0, 0.5
         # self.cell_size = 38
         self.cell_size = 36
-        self.min_pwm = 90
 
         # Log server start
         rospy.loginfo(self.action_name + " server initialized")
@@ -70,24 +70,25 @@ class BotServer:
             data[self.id - 1].update(self.params)
         with open(self.params_path, 'w') as file:
             json.dump(data, file)
-            
+
     def load(self):
         with open(self.params_path, 'r') as file:
             self.params = json.load(file)[self.id - 1]
-            
+
     def dyn_callback(self, config, level):
         if config['load']:
             self.load()
             config.update(self.params)
-            config['load'] = False 
+            config['load'] = False
 
         if config['save']:
             self.save()
             config['save'] = False
 
-        self.params.update({key: config[key] for key in config if key not in ['groups', 'save', 'load']})
+        self.params.update(
+            {key: config[key] for key in config if key not in ['groups', 'save', 'load']})
         return config
-        
+
     # Execute goal callback
     def execute(self, goal):
         sub = rospy.Subscriber('/grid_robot/poses', GridPoseArray,
@@ -171,10 +172,10 @@ class BotServer:
                     break
 
                 balance = self.pid(error)
-                if balance < self.min_pwm and balance > 0:
-                    balance = self.min_pwm
-                if balance > -self.min_pwm and balance < 0:
-                    balance = -self.min_pwm
+                if balance < self.params['min_pwm'] and balance > 0:
+                    balance = self.params['min_pwm']
+                if balance > -self.params['min_pwm'] and balance < 0:
+                    balance = -self.params['min_pwm']
 
                 self.msg.left = int(balance)
                 self.msg.right = int(-balance)
@@ -230,7 +231,7 @@ if __name__ == '__main__':
                         help='robot id, default: 1')
     parser.add_argument('-c', '--coordinates', type=str, default='coordinates.csv',
                         help='relative path to coordinates.csv file')
-    parser.add_argument('-p', '--params', type=str, default='params.json', 
+    parser.add_argument('-p', '--params', type=str, default='params.json',
                         help='relative path to params.csv file')
     args = parser.parse_args()
 
