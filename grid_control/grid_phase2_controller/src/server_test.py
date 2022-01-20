@@ -37,8 +37,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     try:
-        test_client = TestClient(args.server)
+        test_client = TestClient('grid_robot_{}'.format(args.server))
         while not rospy.is_shutdown():
-            test_client([(0, 0), (0, 2), (2, 2), (2, 0), (0, 0)])
+            test_client([(10, 1), (10, 3), (8, 3), (8, 1), (10, 1)])
     except rospy.ROSInterruptException:
         pass

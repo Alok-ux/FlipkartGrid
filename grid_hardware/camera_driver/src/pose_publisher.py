@@ -59,7 +59,7 @@ class PoseCamDriver:
             print(array.poses)
             self.pub.publish(array)
             cv.imshow('frame', frame)
-            if cv.waitKey(30) & 0xFF == ord('q'):
+            if cv.waitKey(1) & 0xFF == ord('q'):
                 break
         cap.release()
         cv.destroyAllWindows()
