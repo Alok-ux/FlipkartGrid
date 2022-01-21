@@ -23,7 +23,7 @@ class Visualizer:
             next_pos = self.idx2px(next_pos[0], next_pos[1])
         cv2.arrowedLine(self.image, curr_pos, next_pos, self.color[id], 2)
         cv2.imshow("image", self.image) 
-        cv2.waitKey(1)
+        cv2.waitKey(0)
 
     def flush(self):
         self.image = cv2.imread(self.path)

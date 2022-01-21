@@ -8,6 +8,7 @@ import rospy
 import rospkg
 import argparse
 import actionlib
+from datetime import datetime
 
 from grid_phase2_controller.msg import botAction, botGoal
 from camera_driver.msg import GridPoseArray
@@ -175,10 +176,12 @@ class Automata:
                          for i in range(len(stations))]
         self.bots = {i: Robot(i+1+i//2, self.stations[i % len(self.stations)], debug)
                      for i in range(num_bots)}
-        self.viz = Visualizer()
+        # self.viz = Visualizer()
         self.total_pkg = sum([len(i) for i in self.stations])
         self.total_dropped = 0
         self.cv_bridge = CvBridge()
+        self.start_time = datetime.now()
+
         rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback)
 
         with open(yaml_path, 'r') as param_file:
@@ -196,8 +199,12 @@ class Automata:
                 pkg_name = self.bots[pose.id//2].current_package
                 cv2.putText(self.image, pkg_name, (int(pose.x), int(pose.y)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-                cv2.imshow('live_feed', self.image)
-                cv2.waitKey(1)
+
+            # cv2.putText(self.image, str(datetime.now() - self.start_time),
+            #             (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+            cv2.imshow('live_feed', self.image)
+            cv2.waitKey(1)
         except CvBridgeError as e:
             print(e)
 
@@ -227,7 +234,7 @@ class Automata:
             # we are executing for specific bots, so reset param for other bots
             self.param['agents'] = []
 
-        self.viz.flush()
+        # self.viz.flush()
 
         while not rospy.is_shutdown():
             ## Count no. of pkgs dropped
@@ -264,7 +271,8 @@ class Automata:
                         bot.goal_station.set_occupied(True)
                         bot.state = 'picking'
                         if bot.curr_pose in self.param['map']['obstacles']:
-                            self.param['map']['obstacles'].pop(self.param['map']['obstacles'].index(bot.curr_pose))
+                            self.param['map']['obstacles'].pop(
+                                self.param['map']['obstacles'].index(bot.curr_pose))
                     else:
                         self.param['map']['obstacles'].append(bot.curr_pose)
                         continue
@@ -282,7 +290,7 @@ class Automata:
 
             self.execute()
             self.param['agents'].clear()
-            self.viz.flush()
+            # self.viz.flush()
 
     def execute(self):
         ## CBS Path Planning
@@ -318,9 +326,9 @@ class Automata:
 
                 self.bots[agent].curr_pose = (
                     solution[agent][i]['x'], solution[agent][i]['y'])
-                self.viz.show(solution[agent][i], solution[agent][i+1], agent)
-                self.viz.legend(['IS{}: {}'.format(i.id, len(
-                    i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
+                # self.viz.show(solution[agent][i], solution[agent][i+1], agent)
+                # self.viz.legend(['IS{}: {}'.format(i.id, len(
+                #     i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
 
             for agent in solution:
                 self.bots[agent].wait_for_result()

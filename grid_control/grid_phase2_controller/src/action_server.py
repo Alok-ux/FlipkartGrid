@@ -119,8 +119,8 @@ class BotServer:
                                     (int(tx), int(ty)), (0, 0, 255), 2)
                     cv2.circle(self.image, (int(tx), int(ty)),
                                int(self.params['thresh_dist']), (255, 0, 0), 2)
-                    cv2.imshow("grid_robot_{}".format(self.id), self.image)
-                    cv2.waitKey(1)
+                    # cv2.imshow("grid_robot_{}".format(self.id), self.image)
+                    # cv2.waitKey(1)
 
                 # Calculate error
                 error = target_angle - robot_angle

@@ -22,6 +22,9 @@ class PoseCamDriver:
         self.source = int(source) if source.isdigit() else source
         rospy.loginfo("Camera Driver Started")
 
+        self.fourcc = cv.VideoWriter_fourcc(*'XVID')
+        self.out = cv.VideoWriter('source.avi', self.fourcc, 30.0, (640, 480))
+
     def read(self):
         cap = cv.VideoCapture(self.source)
         while not rospy.is_shutdown() and cap.isOpened():
@@ -46,6 +49,7 @@ class PoseCamDriver:
             results = self.detector.detect(gray)
 
             array = GridPoseArray()
+            self.out.write(frame)
 
             for result in results:
                 xc, yc = result.center
@@ -62,10 +66,11 @@ class PoseCamDriver:
             array.image = self.cv_bridge.cv2_to_imgmsg(frame, encoding='bgr8')
             print(array.poses)
             self.pub.publish(array)
-            cv.imshow('frame', frame)
+            # cv.imshow('frame', frame)
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
         cap.release()
+        self.out.release()
         cv.destroyAllWindows()
 
 
