@@ -34,16 +34,20 @@ def read_csv(path: str) -> None:
 
 
 class DropLocation:
-    def __init__(self, name, pose):
+    def __init__(self, name: str, x: int, y: int) -> None:
         self.__name = name
-        pose_list = [pose+0+0j, pose+1+0j,
-                     pose-1-1j, pose+2+1j,
-                     pose-1+2j, pose+2+2j,
-                     pose+0+3j, pose+1+3j]
+        pose_list = [((x+0, y+0), (x+0, y+1)), 
+                     ((x+1, y+0), (x+1, y+1)),
+                     ((x-1, y+1), (x+0, y+1)),
+                     ((x+2, y+1), (x+1, y+1)),
+                     ((x-1, y+2), (x+0, y+2)),
+                     ((x+2, y+2), (x+1, y+2)),
+                     ((x+0, y+3), (x+0, y+2)),
+                     ((x+1, y+3), (x+1, y+2))]
 
-        self.__pose = {p: True for p in pose_list}
+        self.__pose = {p: None for p in pose_list}
 
-    def __call__(self, dropped_pose):
+    def __call__(self, dropped_pose=None):
         if dropped_pose and dropped_pose in self.__pose:
             self.__pose[dropped_pose] = True
         else:
@@ -52,15 +56,25 @@ class DropLocation:
                     self.__pose[p] = False
                     return p
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "DropLocation: {} {}".format(self.__name, [x for i, x in enumerate(self.__pose) if self.__available[i]])
 
     def __repr__(self) -> str:
         return self.__str__()
 
+    def get_pose(self, bot) -> tuple:
+        for pose in self.__pose:
+            if self.__pose[pose] == None:
+                self.__pose[pose] = bot
+                return pose
+
+    def pop(self, bot):
+        for pose in self.__pose:
+            if bot == self.__pose[pose]:
+                self.__pose[pose] = None
         
 class InductStation:
-    def __init__(self, id: int, pose: tuple, pkg_path: str, drop_path: str) -> None:
+    def __init__(self, id: int, pose: tuple, pkg_path: str) -> None:
         '''
         Constructor is called when InductStation object is created
         params: id (int): id of the induct station
@@ -76,9 +90,6 @@ class InductStation:
         data = read_csv(pkg_path)   # read package data from csv file
         self.__package_list = [drop_location for _, idx, drop_location in data if int(idx) == self.id] # packages available at the induct station
         self.__package_names = [pkg for pkg, idx, _ in data if int(idx) == self.id]
-
-        data = read_csv(drop_path)  # read drop location data from csv file
-        self.__drop_pose = {drop_location: (int(x), int(y)) for drop_location, x, y in data}
 
     def __len__(self) -> int:
         '''
@@ -104,27 +115,17 @@ class InductStation:
         '''
         return "InductStation({}, {}): IsOccupied: {}".format(self.id, self.__pose, self.__is_occupied)
 
-    def __getitem__(self, key: str) -> list:
-        '''
-        This funtion is called when obj[key] is executed
-        params: key (str): drop location name
-        return: list (list): drop location position
-        '''
-        pose = [self.__drop_pose[key][0], self.__drop_pose[key][1]]
-        dirn = [pose[0]+1, pose[1]]
-        if self.id % 2 == 1:
-            pose[0] += 3
-            pose[1] += 1
-            dirn[0] += 1
-            dirn[1] += 1
-        return [pose, dirn]
-
     def get_package_name(self) -> int:
+        '''
+        This function pops an item name from the beginning of the package list
+        params: None
+        return: (int): poped name from the beginning
+        '''
         return self.__package_names.pop(0)
 
     def pop(self) -> int:
         '''
-        This function pops an entry from the beginning of the induct list
+        This function pops an entry from the beginning of the package list
         params: None
         return: (int): poped entry from the beginning
         '''
@@ -183,8 +184,13 @@ class Robot:
         if not self.debug:
             self.client.send_goal(bot_goal)
 
-    def drop_package(self):
-        pass
+    def on_drop(self):
+        self.drop_location.pop(self)
+        self.drop_location = None        
+
+    def on_pickup(self, drop_location):
+        self.drop_location = drop_location
+        self.goal_pose, self.goal_dirn = self.drop_location.get_pose(self)
 
     def wait_for_result(self):
         if not self.debug:
@@ -197,7 +203,7 @@ class Robot:
 
 class Automata:
     def __init__(self, bots, stations, pkg_path, drop_path, param_path, debug=False):
-        self.stations = [InductStation(i+1, stations[i], pkg_path, drop_path)
+        self.stations = [InductStation(i+1, stations[i], pkg_path)
                          for i in range(len(stations))]
         self.bots = {bots[i]: Robot(bots[i], self.stations[i % len(self.stations)], debug)
                      for i in range(len(bots))}
@@ -206,6 +212,9 @@ class Automata:
         self.total_dropped = 0
         self.cv_bridge = CvBridge()
         self.start_time = datetime.now()
+
+        data = read_csv(drop_path)      # read drop location data from csv file
+        self.drop_locations = {drop_location: DropLocation(drop_location, int(x), int(y)) for drop_location, x, y in data}
 
         # rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback)
 
@@ -264,6 +273,7 @@ class Automata:
         self.viz.flush()
 
         while not rospy.is_shutdown():
+            print("\n****************************************************************************\n")
             ## Count no. of pkgs dropped
             self.total_dropped = self.total_pkg - sum([len(i) for i in self.stations]) - len_stns
             if self.total_pkg == self.total_dropped or num_pkg == self.total_dropped:
@@ -284,9 +294,15 @@ class Automata:
                         # get induct station pose
                         bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()
 
+                elif bot.state == 'standingby' and not bot.goal_station.is_occupied():
+                    bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()
+                    bot.goal_station.set_occupied(True)
+                    bot.state = 'picking'
+                    bot.current_package = ""
+
                 elif bot.state == 'picked':
                     # get new goal from the list
-                    bot.goal_pose, bot.goal_dirn = bot.goal_station[bot.goal_station.pop()]
+                    bot.on_pickup(self.drop_locations[bot.goal_station.pop()])
                     bot.state = 'dropping'
                     bot.current_package = bot.goal_station.get_package_name()
 
@@ -297,10 +313,10 @@ class Automata:
                         bot.goal_station.set_occupied(True)
                         bot.state = 'picking'
                         if bot.curr_pose in self.param['map']['obstacles']:
-                            self.param['map']['obstacles'].pop(
-                                self.param['map']['obstacles'].index(bot.curr_pose))
+                            self.param['map']['obstacles'].pop(self.param['map']['obstacles'].index(bot.curr_pose))
                     else:
-                        self.param['map']['obstacles'].append(bot.curr_pose)
+                        if bot.curr_pose not in self.param['map']['obstacles']:
+                            self.param['map']['obstacles'].append(bot.curr_pose)
                         continue
 
                 self.param['agents'].append({'start': bot.curr_pose,
@@ -320,7 +336,7 @@ class Automata:
 
     def execute(self):
         # CBS Path Planning
-        print(self.param['agents'])
+        print(self.param)
         self.viz.show_plan(self.param['agents'])
         solution = None
         i = 0
@@ -350,6 +366,7 @@ class Automata:
                     if self.bots[agent].state == 'dropping':
                         servo = 1
                         self.bots[agent].state = 'dropped'
+                        self.bots[agent].on_drop()
                     elif self.bots[agent].state == 'picking':
                         self.bots[agent].state = 'picked'
                         self.bots[agent].goal_station.set_occupied(False)
@@ -360,8 +377,7 @@ class Automata:
                                            solution[agent][i+1],
                                            servo=servo)
 
-                self.bots[agent].curr_pose = (
-                    solution[agent][i]['x'], solution[agent][i]['y'])
+                self.bots[agent].curr_pose = (solution[agent][i]['x'], solution[agent][i]['y'])
                 self.viz.show(solution[agent][i], solution[agent][i+1], agent)
                 self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
 
