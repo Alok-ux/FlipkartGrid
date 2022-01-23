@@ -1,68 +1,28 @@
 agents:
--   start: [1, 9]
-    goal: [3, 9]
+-   start: [0, 2]
+    goal: [2, 4]
     name: agent0
--   start: [11, 9]
-    goal: [0, 4]
+-   start: [0, 4]
+    goal: [2, 2]
     name: agent1
 
 map:
-    dimensions: [15,13]
+    dimensions: [8, 7]
     obstacles:
     - !!python/tuple [0, 0]
     - !!python/tuple [0, 1]
-    - !!python/tuple [0, 2]
     - !!python/tuple [0, 3]
     - !!python/tuple [0, 5]
     - !!python/tuple [0, 6]
-    - !!python/tuple [0, 7]
-    - !!python/tuple [0, 8]
-    - !!python/tuple [0, 10]
-    - !!python/tuple [0, 11]
-    - !!python/tuple [0, 12]
-    - !!python/tuple [0, 13]
 
-    - !!python/tuple [3,2]
-    - !!python/tuple [3,3]
-    - !!python/tuple [4,2]
-    - !!python/tuple [4,3]
+    - !!python/tuple [2, 1]
+    - !!python/tuple [4, 1]
+    - !!python/tuple [6, 1]
 
-    - !!python/tuple [3,6]
-    - !!python/tuple [3,7]
-    - !!python/tuple [4,6]
-    - !!python/tuple [4,7]
-
-    - !!python/tuple [3,10]
-    - !!python/tuple [3,11]
-    - !!python/tuple [4,10]
-    - !!python/tuple [4,11]
-
-    - !!python/tuple [7,2]
-    - !!python/tuple [7,3]
-    - !!python/tuple [8,2]
-    - !!python/tuple [8,3]
-
-    - !!python/tuple [7,6]
-    - !!python/tuple [7,7]
-    - !!python/tuple [8,6]
-    - !!python/tuple [8,7]
-
-    - !!python/tuple [7,10]
-    - !!python/tuple [7,11]
-    - !!python/tuple [8,10]
-    - !!python/tuple [8,11]
-
-    - !!python/tuple [11,2]
-    - !!python/tuple [11,3]
-    - !!python/tuple [12,2]
-    - !!python/tuple [12,3]
-
-    - !!python/tuple [11,6]
-    - !!python/tuple [11,7]
-    - !!python/tuple [12,6]
-    - !!python/tuple [12,7]
-
-    - !!python/tuple [11,10]
-    - !!python/tuple [11,11]
-    - !!python/tuple [12,10]
-    - !!python/tuple [12,11]
+    - !!python/tuple [2, 3]
+    - !!python/tuple [4, 3]
+    - !!python/tuple [6, 3]
+    
+    - !!python/tuple [2, 5]
+    - !!python/tuple [4, 5]
+    - !!python/tuple [6, 5]
