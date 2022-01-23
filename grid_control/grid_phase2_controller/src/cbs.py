@@ -6,6 +6,7 @@ author: Ashwin Bose (@atb033)
 
 """
 import sys
+import json
 sys.path.insert(0, '../')
 import argparse
 import yaml
@@ -41,11 +42,11 @@ class State(object):
             Location(x+1, y) == state.location or \
             Location(x-1, y) == state.location or \
             Location(x, y+1) == state.location or \
-            Location(x, y-1) == state.location or \
-            Location(x+1, y+1) == state.location or \
-            Location(x+1, y-1) == state.location or \
-            Location(x-1, y+1) == state.location or \
-            Location(x-1, y-1) == state.location
+            Location(x, y-1) == state.location 
+            # Location(x+1, y+1) == state.location or \
+            # Location(x+1, y-1) == state.location or \
+            # Location(x-1, y+1) == state.location or \
+            # Location(x-1, y-1) == state.location
     def __str__(self):
         return str((self.time, self.location.x, self.location.y))
 
@@ -320,6 +321,9 @@ class CBS(object):
         return plan
 
 
+i = 0
+path = '/home/lucifer/flipkart_ws/src/FlipkartGrid/grid_control/grid_phase2_controller/data/solutions.json'
+
 def solve(param):
     dimension = param["map"]["dimensions"]
     obstacles = param["map"]["obstacles"]
@@ -333,8 +337,26 @@ def solve(param):
     if not solution:
         print(" Solution not found" )
         return None, env
-
     return solution, env
+    
+def cbs_record(param):
+    global i
+    with open(path, 'r') as file:
+        data = json.load(file)
+    if i < len(data):
+        output = data[i]
+        i += 1
+        return output, None
+    else:
+        solution, env = solve(param)
+        if not solution:
+            return None, env
+        else:
+            data.append(solution)
+            with open(path, 'w') as file:
+                json.dump(data, file)
+        i += 1
+        return solution, env
     
 
 

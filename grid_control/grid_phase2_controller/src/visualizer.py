@@ -20,8 +20,8 @@ class Visualizer:
         for agent in param:
             start = self.idx2px(agent['start'][0], agent['start'][1]) 
             goal = self.idx2px(agent['goal'][0], agent['goal'][1])
-            cv2.drawMarker(self.image, start, self.color[agent['name']], 1, 25, 2)
-            cv2.drawMarker(self.image, goal, self.color[agent['name']], 2, 25, 2)
+            cv2.drawMarker(self.image, start, self.color[int(agent['name'])], 1, 25, 2)
+            cv2.drawMarker(self.image, goal, self.color[int(agent['name'])], 2, 25, 2)
             cv2.imshow("image", self.image)
             cv2.waitKey(delay)
 
@@ -32,7 +32,7 @@ class Visualizer:
         else:
             curr_pos = self.idx2px(curr_pos[0], curr_pos[1])
             next_pos = self.idx2px(next_pos[0], next_pos[1])
-        cv2.arrowedLine(self.image, curr_pos, next_pos, self.color[id], 2)
+        cv2.arrowedLine(self.image, curr_pos, next_pos, self.color[int(id)], 2)
         cv2.imshow("image", self.image) 
         cv2.waitKey(delay)
 

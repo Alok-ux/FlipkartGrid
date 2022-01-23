@@ -14,7 +14,7 @@ from datetime import datetime
 from grid_phase2_controller.msg import botAction, botGoal
 from camera_driver.msg import GridPoseArray
 from cv_bridge import CvBridge, CvBridgeError
-from cbs import solve
+from cbs import cbs_record
 from visualizer import Visualizer
 
 
@@ -39,11 +39,11 @@ class DropLocation:
         self.__name = name
         pose_list = [((x+0, y+0), (x+0, y+1)), 
                     #  ((x+1, y+0), (x+1, y+1)),
-                     ((x+2, y+1), (x+1, y+1)),
+                    #  ((x+2, y+1), (x+1, y+1)),
                     #  ((x+2, y+2), (x+1, y+2)),
                      ((x+1, y+3), (x+1, y+2)),
                     #  ((x+0, y+3), (x+0, y+2)),
-                     ((x-1, y+2), (x+0, y+2)),
+                    #  ((x-1, y+2), (x+0, y+2)),
                     #  ((x-1, y+1), (x+0, y+1)),
                     ]
 
@@ -324,7 +324,7 @@ class Automata:
 
                 self.param['agents'].append({'start': bot.curr_pose,
                                              'goal': bot.goal_pose,
-                                             'name': bot.id})
+                                             'name': str(bot.id)})
 
                 print(bot)
 
@@ -344,7 +344,7 @@ class Automata:
         solution = None
         i = 0
         while not solution and not rospy.is_shutdown():
-            solution, _ = solve(self.param)
+            solution, _ = cbs_record(self.param)
             time.sleep(0.1)
             i += 1
             if i == 50:
@@ -356,7 +356,7 @@ class Automata:
         if not rospy.is_shutdown():
             for agent in solution:
                 # dummy goal position (for phi calc)
-                x, y = self.bots[agent].goal_dirn
+                x, y = self.bots[int(agent)].goal_dirn
                 # append dummy goal to solution list
                 solution[agent].append({'t': len(solution[agent]), 'x': x, 'y': y})
 
@@ -368,26 +368,26 @@ class Automata:
 
                 if i == len(solution[agent])-2:
                     preempted = True
-                    if self.bots[agent].state == 'dropping':
+                    if self.bots[int(agent)].state == 'dropping':
                         servo = 1
-                        self.bots[agent].state = 'dropped'
-                        self.bots[agent].on_drop()
-                    elif self.bots[agent].state == 'picking':
-                        self.bots[agent].state = 'picked'
-                        self.bots[agent].goal_station.set_occupied(False)
-                    elif self.bots[agent].state == 'standingby':
-                        self.bots[agent].state = 'standby'
+                        self.bots[int(agent)].state = 'dropped'
+                        self.bots[int(agent)].on_drop()
+                    elif self.bots[int(agent)].state == 'picking':
+                        self.bots[int(agent)].state = 'picked'
+                        self.bots[int(agent)].goal_station.set_occupied(False)
+                    elif self.bots[int(agent)].state == 'standingby':
+                        self.bots[int(agent)].state = 'standby'
 
-                self.bots[agent].send_goal(solution[agent][i],
+                self.bots[int(agent)].send_goal(solution[agent][i],
                                            solution[agent][i+1],
                                            servo=servo)
 
-                self.bots[agent].curr_pose = (solution[agent][i]['x'], solution[agent][i]['y'])
+                self.bots[int(agent)].curr_pose = (solution[agent][i]['x'], solution[agent][i]['y'])
                 self.viz.show(solution[agent][i], solution[agent][i+1], agent)
                 self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
 
             for agent in solution:
-                self.bots[agent].wait_for_result()
+                self.bots[int(agent)].wait_for_result()
 
             i += 1
 
