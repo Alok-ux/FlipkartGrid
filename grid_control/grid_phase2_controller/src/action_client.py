@@ -3,6 +3,7 @@
 import cv2
 import csv
 import yaml
+import time
 import math
 import rospy
 import rospkg
@@ -37,13 +38,14 @@ class DropLocation:
     def __init__(self, name: str, x: int, y: int) -> None:
         self.__name = name
         pose_list = [((x+0, y+0), (x+0, y+1)), 
-                     ((x+1, y+0), (x+1, y+1)),
-                     ((x-1, y+1), (x+0, y+1)),
+                    #  ((x+1, y+0), (x+1, y+1)),
                      ((x+2, y+1), (x+1, y+1)),
+                    #  ((x+2, y+2), (x+1, y+2)),
+                     ((x+1, y+3), (x+1, y+2)),
+                    #  ((x+0, y+3), (x+0, y+2)),
                      ((x-1, y+2), (x+0, y+2)),
-                     ((x+2, y+2), (x+1, y+2)),
-                     ((x+0, y+3), (x+0, y+2)),
-                     ((x+1, y+3), (x+1, y+2))]
+                    #  ((x-1, y+1), (x+0, y+1)),
+                    ]
 
         self.__pose = {p: None for p in pose_list}
 
@@ -156,7 +158,8 @@ class InductStation:
         x, y = self.__pose
 
         if self.__is_occupied:
-            return (x + 4, y), (x + 3, y)
+            # return (x + 4, y), (x + 3, y)
+            return ((1, 0), (1, 1)) if self.id % 2 == 0 else ((1, 12), (1, 11))
 
         return (x, y), (x + 1, y)
 
@@ -342,8 +345,10 @@ class Automata:
         i = 0
         while not solution and not rospy.is_shutdown():
             solution, _ = solve(self.param)
+            time.sleep(0.1)
             i += 1
-            if i == 20:
+            if i == 50:
+                input()
                 break
             # print(solution)
         

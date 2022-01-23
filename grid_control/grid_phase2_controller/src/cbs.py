@@ -35,17 +35,17 @@ class State(object):
     def is_equal_except_time(self, state):
         return self.location == state.location
     def is_near_except_time(self, state):
-        return self.is_equal_except_time(state)
-        # x, y = self.location.x, self.location.y
-        # return self.location == state.location or \
-        #     Location(x+1, y) == state.location or \
-        #     Location(x-1, y) == state.location or \
-        #     Location(x, y+1) == state.location or \
-        #     Location(x, y-1) == state.location or \
-        #     Location(x+1, y+1) == state.location or \
-        #     Location(x+1, y-1) == state.location or \
-        #     Location(x-1, y+1) == state.location or \
-        #     Location(x-1, y-1) == state.location
+        # return self.is_equal_except_time(state)
+        x, y = self.location.x, self.location.y
+        return self.location == state.location or \
+            Location(x+1, y) == state.location or \
+            Location(x-1, y) == state.location or \
+            Location(x, y+1) == state.location or \
+            Location(x, y-1) == state.location or \
+            Location(x+1, y+1) == state.location or \
+            Location(x+1, y-1) == state.location or \
+            Location(x-1, y+1) == state.location or \
+            Location(x-1, y-1) == state.location
     def __str__(self):
         return str((self.time, self.location.x, self.location.y))
 

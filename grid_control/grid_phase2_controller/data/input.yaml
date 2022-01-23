@@ -1,9 +1,9 @@
 agents:
--   start: [0, 4]
-    goal: [3, 4]
+-   start: [1, 9]
+    goal: [3, 9]
     name: agent0
--   start: [0, 9]
-    goal: [5, 3]
+-   start: [11, 9]
+    goal: [0, 4]
     name: agent1
 
 map:
