@@ -17,8 +17,50 @@ from cbs import solve
 from visualizer import Visualizer
 
 
+def read_csv(path: str) -> None:
+        '''
+        reads csv file containing package list and corresponding drop location
+        params: path (str): path of the csv file
+        return: None
+        '''
+        with open(path) as file:
+            reader = csv.reader(file)
+            data = []
+            for i, row in enumerate(reader):
+                if i == 0:
+                    continue
+                data.append(row)
+            return data
+
+
+class DropLocation:
+    def __init__(self, name, pose):
+        self.__name = name
+        pose_list = [pose+0+0j, pose+1+0j,
+                     pose-1-1j, pose+2+1j,
+                     pose-1+2j, pose+2+2j,
+                     pose+0+3j, pose+1+3j]
+
+        self.__pose = {p: True for p in pose_list}
+
+    def __call__(self, dropped_pose):
+        if dropped_pose and dropped_pose in self.__pose:
+            self.__pose[dropped_pose] = True
+        else:
+            for p in self.__pose:
+                if self.__pose[p]:
+                    self.__pose[p] = False
+                    return p
+
+    def __str__(self):
+        return "DropLocation: {} {}".format(self.__name, [x for i, x in enumerate(self.__pose) if self.__available[i]])
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+        
 class InductStation:
-    def __init__(self, id: int, pose: tuple, path: str) -> None:
+    def __init__(self, id: int, pose: tuple, pkg_path: str, drop_path: str) -> None:
         '''
         Constructor is called when InductStation object is created
         params: id (int): id of the induct station
@@ -31,37 +73,12 @@ class InductStation:
         self.__pose = pose          # position of induct station e.q. (1, 2)
         self.__is_occupied = False  # flag for induct station occupancy
 
-        self.__induct_list = []     # packages available at the induct station
-        self.__pakage_list = []
-        self.__read_csv(path)       # read package data from csv file
+        data = read_csv(pkg_path)   # read package data from csv file
+        self.__package_list = [drop_location for _, idx, drop_location in data if int(idx) == self.id] # packages available at the induct station
+        self.__package_names = [pkg for pkg, idx, _ in data if int(idx) == self.id]
 
-        self.__drop_pose = {'Mumbai': (3, 9),
-                            'Delhi': (7, 9),
-                            'Kolkata': (11, 9),
-                            'Chennai': (3, 5),
-                            'Bengaluru': (7, 5),
-                            'Hyderabad': (11, 5),
-                            'Pune': (3, 1),
-                            'Ahmedabad': (7, 1),
-                            'Jaipur': (11, 1)}   # position of drop
-
-    def __read_csv(self, path: str) -> None:
-        '''
-        reads csv file containing package list and corresponding drop location
-        params: path (str): path of the csv file
-        return: None
-        '''
-        with open(path) as file:
-            reader = csv.reader(file)
-            for i, row in enumerate(reader):
-                if i == 0:
-                    continue
-                if int(row[1]) == self.id:
-                    self.__induct_list.append(row[-1])
-                    self.__pakage_list.append(row[0])
-
-    def pop_pkg(self) -> int:
-        return self.__pakage_list.pop(0)
+        data = read_csv(drop_path)  # read drop location data from csv file
+        self.__drop_pose = {drop_location: (int(x), int(y)) for drop_location, x, y in data}
 
     def __len__(self) -> int:
         '''
@@ -69,7 +86,7 @@ class InductStation:
         params: None
         return: (int): length of the induct list
         '''
-        return len(self.__induct_list)
+        return len(self.__package_list)
 
     def __iter__(self) -> iter:
         '''
@@ -77,7 +94,7 @@ class InductStation:
         params: None
         return: (iter): iterator of induct list
         '''
-        return iter(self.__induct_list)
+        return iter(self.__package_list)
 
     def __repr__(self) -> str:
         '''
@@ -94,11 +111,16 @@ class InductStation:
         return: list (list): drop location position
         '''
         pose = [self.__drop_pose[key][0], self.__drop_pose[key][1]]
-        dirn = [pose[0], pose[1]+1]
+        dirn = [pose[0]+1, pose[1]]
         if self.id % 2 == 1:
-            pose[1] += 3
+            pose[0] += 3
+            pose[1] += 1
+            dirn[0] += 1
             dirn[1] += 1
         return [pose, dirn]
+
+    def get_package_name(self) -> int:
+        return self.__package_names.pop(0)
 
     def pop(self) -> int:
         '''
@@ -106,7 +128,7 @@ class InductStation:
         params: None
         return: (int): poped entry from the beginning
         '''
-        return self.__induct_list.pop(0)
+        return self.__package_list.pop(0)
 
     def set_occupied(self, occupied: bool) -> None:
         '''
@@ -145,7 +167,7 @@ class Robot:
             'grid_robot_{}'.format(id), botAction)
         self.debug = debug
         self.goal_station = goal_station
-        self.current_package = goal_station.pop_pkg()
+        self.current_package = goal_station.get_package_name()
         self.state = 'picking'
         self.curr_pose, self.goal_pose, self.goal_dirn = None, None, None
 
@@ -161,6 +183,9 @@ class Robot:
         if not self.debug:
             self.client.send_goal(bot_goal)
 
+    def drop_package(self):
+        pass
+
     def wait_for_result(self):
         if not self.debug:
             self.client.wait_for_result()
@@ -171,20 +196,20 @@ class Robot:
 
 
 class Automata:
-    def __init__(self, num_bots, stations, csv_path, yaml_path, debug=False):
-        self.stations = [InductStation(i+1, stations[i], csv_path)
+    def __init__(self, bots, stations, pkg_path, drop_path, param_path, debug=False):
+        self.stations = [InductStation(i+1, stations[i], pkg_path, drop_path)
                          for i in range(len(stations))]
-        self.bots = {i: Robot(i+1+i//2, self.stations[i % len(self.stations)], debug)
-                     for i in range(num_bots)}
-        # self.viz = Visualizer()
+        self.bots = {bots[i]: Robot(bots[i], self.stations[i % len(self.stations)], debug)
+                     for i in range(len(bots))}
+        self.viz = Visualizer()
         self.total_pkg = sum([len(i) for i in self.stations])
         self.total_dropped = 0
         self.cv_bridge = CvBridge()
         self.start_time = datetime.now()
 
-        rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback)
+        # rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback)
 
-        with open(yaml_path, 'r') as param_file:
+        with open(param_path, 'r') as param_file:
             try:
                 self.param = yaml.load(param_file, Loader=yaml.FullLoader)
                 self.param['agents'] = []
@@ -196,7 +221,7 @@ class Automata:
             self.image = self.cv_bridge.imgmsg_to_cv2(msg.image,
                                                       desired_encoding='bgr8')
             for pose in msg.poses:
-                pkg_name = self.bots[pose.id//2].current_package
+                pkg_name = self.bots[pose.id].current_package
                 cv2.putText(self.image, pkg_name, (int(pose.x), int(pose.y)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
@@ -219,14 +244,16 @@ class Automata:
                 station = self.stations[id % len_stns]
                 x, y = station.get_pose()[0]
 
-                self.bots[id].curr_pose = (x, y)
-                self.bots[id].goal_station = station
-                self.bots[id].goal_pose = [x + 2 * (num_iter - 1 - i), y]
-                self.bots[id].goal_dirn = [x + 2 * (num_iter - 1 - i) + 1, y]
+                bot = list(self.bots.values())
+                print(bot)
+                bot[id].curr_pose = (x, y)
+                bot[id].goal_station = station
+                bot[id].goal_pose = [x + 2 * (num_iter - 1 - i), y]
+                bot[id].goal_dirn = [x + 2 * (num_iter - 1 - i) + 1, y]
 
-                self.param['agents'].append({'start': self.bots[id].curr_pose,
-                                             'goal': self.bots[id].goal_pose,
-                                             'name': id})
+                self.param['agents'].append({'start': bot[id].curr_pose,
+                                             'goal': bot[id].goal_pose,
+                                             'name': bot[id].id})
                 print('B: {}, S: {}, X: {}, i: {}, id: {}'.format(
                     len_bots, len_stns, num_iter, i, id))
 
@@ -234,12 +261,11 @@ class Automata:
             # we are executing for specific bots, so reset param for other bots
             self.param['agents'] = []
 
-        # self.viz.flush()
+        self.viz.flush()
 
         while not rospy.is_shutdown():
             ## Count no. of pkgs dropped
-            self.total_dropped = self.total_pkg - \
-                sum([len(i) for i in self.stations]) - len_stns
+            self.total_dropped = self.total_pkg - sum([len(i) for i in self.stations]) - len_stns
             if self.total_pkg == self.total_dropped or num_pkg == self.total_dropped:
                 rospy.signal_shutdown('killed')
 
@@ -250,19 +276,19 @@ class Automata:
                         bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()
                         bot.goal_station.set_occupied(True)
                         bot.state = 'picking'
-                        # print(bot.id, "has dropped", bot.current_package)
-                        bot.current_package = bot.goal_station.pop_pkg()
+                        bot.current_package = ""
+                        
                     else:
                         bot.state = 'standingby'
+                        bot.current_package = ""
                         # get induct station pose
                         bot.goal_pose, bot.goal_dirn = bot.goal_station.get_pose()
 
                 elif bot.state == 'picked':
                     # get new goal from the list
-                    bot.goal_pose, bot.goal_dirn = bot.goal_station[bot.goal_station.pop(
-                    )]
+                    bot.goal_pose, bot.goal_dirn = bot.goal_station[bot.goal_station.pop()]
                     bot.state = 'dropping'
-                    # print(bot.id, "is handling", bot.current_package)
+                    bot.current_package = bot.goal_station.get_package_name()
 
                 elif bot.state == 'standby':
                     if not bot.goal_station.is_occupied():
@@ -279,7 +305,7 @@ class Automata:
 
                 self.param['agents'].append({'start': bot.curr_pose,
                                              'goal': bot.goal_pose,
-                                             'name': bot.id//2})
+                                             'name': bot.id})
 
                 print(bot)
 
@@ -290,22 +316,32 @@ class Automata:
 
             self.execute()
             self.param['agents'].clear()
-            # self.viz.flush()
+            self.viz.flush()
 
     def execute(self):
-        ## CBS Path Planning
-        solution, _ = solve(self.param)
+        # CBS Path Planning
+        print(self.param['agents'])
+        self.viz.show_plan(self.param['agents'])
+        solution = None
+        i = 0
+        while not solution and not rospy.is_shutdown():
+            solution, _ = solve(self.param)
+            i += 1
+            if i == 20:
+                break
+            # print(solution)
+        
+        # Add dummy pose
+        if not rospy.is_shutdown():
+            for agent in solution:
+                # dummy goal position (for phi calc)
+                x, y = self.bots[agent].goal_dirn
+                # append dummy goal to solution list
+                solution[agent].append({'t': len(solution[agent]), 'x': x, 'y': y})
 
-        ## Add dummy pose
-        for agent in solution:
-            # dummy goal position (for phi calc)
-            x, y = self.bots[agent].goal_dirn
-            # append dummy goal to solution list
-            solution[agent].append({'t': len(solution[agent]), 'x': x, 'y': y})
-
-        ## Send Goals
+        # Send Goals
         i, preempted = 0, False
-        while not preempted:
+        while not preempted and not rospy.is_shutdown():
             for agent in solution:
                 servo = 0
 
@@ -326,9 +362,8 @@ class Automata:
 
                 self.bots[agent].curr_pose = (
                     solution[agent][i]['x'], solution[agent][i]['y'])
-                # self.viz.show(solution[agent][i], solution[agent][i+1], agent)
-                # self.viz.legend(['IS{}: {}'.format(i.id, len(
-                #     i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
+                self.viz.show(solution[agent][i], solution[agent][i+1], agent)
+                self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
 
             for agent in solution:
                 self.bots[agent].wait_for_result()
@@ -340,13 +375,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--num_pkg', type=int,
                         help='iterate for num packages, default: None, for all')
-    parser.add_argument('-b', '--bots', type=int, default=2,
+    parser.add_argument('-b', '--bots', nargs='+', type=int, default=2,
                         help='number of robots, default: 2')
-    parser.add_argument('-c', '--csv', type=str,
-                        help='path to csv file, default: None')
+    parser.add_argument('-p', '--pkg', type=str,
+                        help='path to package file, default: None')
+    parser.add_argument('-d', '--drop', type=str,
+                        help='path to drop file, default: None')
     parser.add_argument('-y', '--yaml', type=str,
                         help='path to yaml file, default: None')
-    parser.add_argument('-d', '--debug', action='store_true',
+    parser.add_argument('--debug', action='store_true',
                         help='run action client in dubugging mode, do not wait for server')
 
     args = parser.parse_args()
@@ -356,12 +393,13 @@ if __name__ == '__main__':
         rospack = rospkg.RosPack()
         path = rospack.get_path('grid_phase2_controller') + "/data/"
 
-        csv_path = args.csv if args.csv else path + "Sample Data - Sheet1.csv"
+        pkg_path = args.pkg if args.pkg else path + "Sample Data - Sheet1.csv"
+        drop_path = args.drop if args.drop else path + "drop_location.csv"
         yaml_path = args.yaml if args.yaml else path + "input.yaml"
 
         stations_pose = [(0, 9), (0, 4)]
         automata = Automata(args.bots, stations_pose,
-                            csv_path, yaml_path, args.debug)
+                            pkg_path, drop_path, yaml_path, args.debug)
         automata.automata(args.num_pkg)
 
         if not rospy.is_shutdown():
