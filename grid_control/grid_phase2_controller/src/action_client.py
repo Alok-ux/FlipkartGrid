@@ -210,7 +210,7 @@ class Automata:
                          for i in range(len(stations))]
         self.bots = {bots[i]: Robot(bots[i], self.stations[i % len(self.stations)], debug)
                      for i in range(len(bots))}
-        self.viz = Visualizer()
+        # self.viz = Visualizer()
         self.total_pkg = sum([len(i) for i in self.stations])
         self.total_dropped = 0
         self.cv_bridge = CvBridge()
@@ -219,7 +219,7 @@ class Automata:
         data = read_csv(drop_path)      # read drop location data from csv file
         self.drop_locations = {drop_location: DropLocation(drop_location, int(x), int(y)) for drop_location, x, y in data}
 
-        # rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback)
+        rospy.Subscriber('grid_robot/poses', GridPoseArray, self.callback)
 
         with open(param_path, 'r') as param_file:
             try:
@@ -273,7 +273,7 @@ class Automata:
             # we are executing for specific bots, so reset param for other bots
             self.param['agents'] = []
 
-        self.viz.flush()
+        # self.viz.flush()
 
         while not rospy.is_shutdown():
             print("\n****************************************************************************\n")
@@ -335,12 +335,12 @@ class Automata:
 
             self.execute()
             self.param['agents'].clear()
-            self.viz.flush()
+            # self.viz.flush()
 
     def execute(self):
         # CBS Path Planning
         print(self.param)
-        self.viz.show_plan(self.param['agents'])
+        # self.viz.show_plan(self.param['agents'])
         solution = None
         i = 0
         while not solution and not rospy.is_shutdown():
@@ -383,8 +383,8 @@ class Automata:
                                            servo=servo)
 
                 self.bots[int(agent)].curr_pose = (solution[agent][i]['x'], solution[agent][i]['y'])
-                self.viz.show(solution[agent][i], solution[agent][i+1], agent)
-                self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
+                # self.viz.show(solution[agent][i], solution[agent][i+1], agent)
+                # self.viz.legend(['IS{}: {}'.format(i.id, len(i)) for i in self.stations] + ['Drop: {}'.format(self.total_dropped)])
 
             for agent in solution:
                 self.bots[int(agent)].wait_for_result()

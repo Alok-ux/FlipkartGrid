@@ -13,7 +13,7 @@ import yaml
 from math import fabs
 from itertools import combinations
 from copy import deepcopy
-
+import rospkg
 from a_star import AStar
 
 class Location(object):
@@ -322,7 +322,7 @@ class CBS(object):
 
 
 i = 0
-path = '/home/lucifer/flipkart_ws/src/FlipkartGrid/grid_control/grid_phase2_controller/data/solutions.json'
+path = rospkg.RosPack().get_path('grid_phase2_controller') + '/data/solutions.json'
 
 def solve(param):
     dimension = param["map"]["dimensions"]

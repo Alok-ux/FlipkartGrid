@@ -64,6 +64,8 @@ class BotServer:
         # Log server start
         rospy.loginfo(self.action_name + " server initialized")
 
+        sub = rospy.Subscriber('/grid_robot/poses', GridPoseArray, self.callback)
+
     def save(self):
         with open(self.params_path, 'r') as file:
             data = json.load(file)
@@ -91,10 +93,7 @@ class BotServer:
 
     # Execute goal callback
     def execute(self, goal):
-        sub = rospy.Subscriber('/grid_robot/poses', GridPoseArray,
-                               self.callback)
-        time.sleep(0.5)
-
+        time.sleep(0.1)
         # Linear PID
         while not rospy.is_shutdown():
             try:
@@ -201,8 +200,7 @@ class BotServer:
         self.server.set_succeeded(self.result)
 
         # Unregister from image feed after goal completion
-        sub.unregister()
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
 
     def callback(self, msg):
         self.pose = [pose for pose in msg.poses if pose.id == self.id]
