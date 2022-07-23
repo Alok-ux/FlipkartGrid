@@ -3,7 +3,7 @@
 import rospy
 import argparse
 import telnetlib
-import websocket
+import socket
 from grid_transmitter.msg import PwmCombined
 
 
@@ -25,8 +25,8 @@ class Transmitter:
             self.telnet = telnetlib.Telnet(ip, args.port)
             rospy.loginfo("Telnet connected to %s:%s", ip, args.port)
         else:
-            self.websocket = websocket.WebSocket()
-            self.websocket.connect("ws://{}:{}".format(ip, args.port))
+            self.websocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.websocket.connect((ip, args.port))
             rospy.loginfo("WebSocket connected to %s:%s", ip, args.port)
 
     def __del__(self):
